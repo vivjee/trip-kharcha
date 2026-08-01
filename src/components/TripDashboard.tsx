@@ -252,7 +252,7 @@ export default function TripDashboard({
           <p className="text-xs text-slate-400 italic text-center py-4">No expenses recorded yet.</p>
         ) : (
           <div className="space-y-2">
-            {trip.expenses.slice(-3).reverse().map((expense) => {
+            {trip.expenses.slice(0, 3).map((expense) => {
               const payer = getParticipant(expense.paidById);
               return (
                 <motion.div

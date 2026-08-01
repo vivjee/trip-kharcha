@@ -2,17 +2,19 @@
 
 import React, { useState } from 'react';
 import { Trip, Expense } from '@/types/trip';
-import { Plus, Search, Trash2, Calendar, User, Users } from 'lucide-react';
+import { Plus, Search, Trash2, Calendar, User, Users, Pencil } from 'lucide-react';
 
 interface ExpensesViewProps {
   trip: Trip;
   onOpenAddExpense: () => void;
+  onEditExpense: (expense: Expense) => void;
   onDeleteExpense: (expenseId: string) => void;
 }
 
 export default function ExpensesView({
   trip,
   onOpenAddExpense,
+  onEditExpense,
   onDeleteExpense,
 }: ExpensesViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -98,10 +100,7 @@ export default function ExpensesView({
         </div>
       ) : (
         <div className="space-y-2.5">
-          {filteredExpenses
-            .slice()
-            .reverse()
-            .map((expense) => {
+          {filteredExpenses.map((expense) => {
               const payer = getParticipant(expense.paidById);
               const perPerson =
                 expense.includedParticipantIds.length > 0
@@ -170,10 +169,15 @@ export default function ExpensesView({
                         {expense.includedParticipantIds.length} members
                       </span>
 
+                      <button onClick={() => onEditExpense(expense)} aria-label={`Edit ${expense.title}`} className="w-10 h-10 text-slate-500 hover:text-indigo-700 rounded-xl hover:bg-indigo-50 flex items-center justify-center cursor-pointer">
+                        <Pencil className="w-4 h-4" />
+                      </button>
                       <button
-                        onClick={() => onDeleteExpense(expense.id)}
-                        className="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
-                        title="Delete Expense"
+                        onClick={() => {
+                          if (window.confirm(`Delete “${expense.title}”? This will recalculate every balance.`)) onDeleteExpense(expense.id);
+                        }}
+                        className="w-10 h-10 text-slate-500 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-colors cursor-pointer flex items-center justify-center"
+                        aria-label={`Delete ${expense.title}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

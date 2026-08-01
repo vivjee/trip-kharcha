@@ -1,189 +1,140 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Trip, Settlement, SimplifiedDebt } from '@/types/trip';
-import { X, ArrowRight, CheckCircle2, DollarSign } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import React, { useState } from 'react';
+import { ArrowRight, CheckCircle2, HandCoins, X } from 'lucide-react';
+import { getTodayLocalDate } from '@/lib/date-utils';
+import { calculateSimplifiedDebts } from '@/lib/debt-simplification';
+import { Settlement, SimplifiedDebt, Trip } from '@/types/trip';
 
 interface SettleUpModalProps {
   trip: Trip;
   isOpen: boolean;
   presetDebt?: SimplifiedDebt;
+  settlementToEdit?: Settlement;
   onClose: () => void;
-  onConfirmSettlement: (settlement: Omit<Settlement, 'id'>) => void;
+  onSaveSettlement: (settlement: Omit<Settlement, 'id'>, settlementId?: string) => void;
 }
 
-export default function SettleUpModal({
-  trip,
-  isOpen,
-  presetDebt,
-  onClose,
-  onConfirmSettlement,
-}: SettleUpModalProps) {
-  const [fromId, setFromId] = useState('');
-  const [toId, setToId] = useState('');
-  const [amountStr, setAmountStr] = useState('');
-  const [notes, setNotes] = useState('');
+function SettlementForm({ trip, presetDebt, settlement, onClose, onSaveSettlement }: {
+  trip: Trip;
+  presetDebt?: SimplifiedDebt;
+  settlement?: Settlement;
+  onClose: () => void;
+  onSaveSettlement: SettleUpModalProps['onSaveSettlement'];
+}) {
+  const tripBeforeEdit = settlement
+    ? { ...trip, settlements: trip.settlements.filter((item) => item.id !== settlement.id) }
+    : trip;
+  const debts = calculateSimplifiedDebts(tripBeforeEdit);
+  const initialDebt = presetDebt || debts.find((debt) => (
+    debt.from.id === settlement?.fromParticipantId && debt.to.id === settlement?.toParticipantId
+  )) || debts[0];
+  const [fromId, setFromId] = useState(settlement?.fromParticipantId || initialDebt?.from.id || '');
+  const [toId, setToId] = useState(settlement?.toParticipantId || initialDebt?.to.id || '');
+  const [amountStr, setAmountStr] = useState(String(settlement?.amount || initialDebt?.amount || ''));
+  const [date, setDate] = useState(settlement?.date || getTodayLocalDate());
+  const [notes, setNotes] = useState(settlement?.notes || '');
 
-  useEffect(() => {
-    if (isOpen) {
-      if (presetDebt) {
-        setFromId(presetDebt.from.id);
-        setToId(presetDebt.to.id);
-        setAmountStr(presetDebt.amount.toString());
-        setNotes(`Settlement payment from ${presetDebt.from.name} to ${presetDebt.to.name}`);
-      } else if (trip.participants.length >= 2) {
-        setFromId(trip.participants[0].id);
-        setToId(trip.participants[1].id);
-        setAmountStr('');
-        setNotes('Debt settlement');
-      }
+  const selectedDebt = debts.find((debt) => debt.from.id === fromId && debt.to.id === toId);
+  const amount = Number(amountStr) || 0;
+  const maxAmount = selectedDebt?.amount || 0;
+  const valid = Boolean(fromId && toId && fromId !== toId && amount > 0 && amount <= maxAmount + 0.009 && date);
+  const from = trip.participants.find((participant) => participant.id === fromId);
+  const to = trip.participants.find((participant) => participant.id === toId);
+
+  const changeFrom = (id: string) => {
+    setFromId(id);
+    const matching = debts.find((debt) => debt.from.id === id);
+    if (matching) {
+      setToId(matching.to.id);
+      setAmountStr(String(matching.amount));
     }
-  }, [presetDebt, trip.participants, isOpen]);
+  };
 
-  if (!isOpen) return null;
+  const changeTo = (id: string) => {
+    setToId(id);
+    const matching = debts.find((debt) => debt.from.id === fromId && debt.to.id === id);
+    setAmountStr(matching ? String(matching.amount) : '');
+  };
 
-  const numAmount = parseFloat(amountStr) || 0;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!fromId || !toId || fromId === toId || numAmount <= 0) return;
-
-    onConfirmSettlement({
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!valid) return;
+    const now = new Date().toISOString();
+    onSaveSettlement({
       fromParticipantId: fromId,
       toParticipantId: toId,
-      amount: numAmount,
-      date: new Date().toISOString().split('T')[0],
+      amount: Math.round(amount * 100) / 100,
+      date,
       notes: notes.trim(),
-    });
-
+      createdAt: settlement?.createdAt || now,
+      updatedAt: now,
+      createdByParticipantId: settlement?.createdByParticipantId,
+    }, settlement?.id);
     onClose();
   };
 
-  const fromPart = trip.participants.find((p) => p.id === fromId);
-  const toPart = trip.participants.find((p) => p.id === toId);
-
-  const isFormValid =
-    fromId.length > 0 &&
-    toId.length > 0 &&
-    fromId !== toId &&
-    numAmount > 0;
-
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-pop-in">
-      <div className="w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-emerald-50/60">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-              <DollarSign className="w-4 h-4" />
-            </div>
-            <h2 className="text-sm font-bold text-slate-900">Record Settlement Payment</h2>
+    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-sm flex items-end md:items-center justify-center md:p-4 animate-pop-in" role="dialog" aria-modal="true" aria-labelledby="settlement-title">
+      <div className="w-full max-w-md bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[94dvh]">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-emerald-50">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center"><HandCoins className="w-5 h-5" /></div>
+            <div><h2 id="settlement-title" className="text-base font-extrabold text-slate-900">{settlement ? 'Edit Settlement' : 'Record Settlement'}</h2><p className="text-xs text-slate-500">Only outstanding payments can be recorded</p></div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 rounded-full bg-slate-200/60 flex items-center justify-center text-slate-600 hover:bg-slate-300 transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <button onClick={onClose} aria-label="Close settlement form" className="w-11 h-11 -mr-2 rounded-full bg-slate-200/70 flex items-center justify-center text-slate-600 hover:bg-slate-300 cursor-pointer"><X className="w-5 h-5" /></button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          {/* Payer & Receiver Cards Visual */}
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
-            <div className="text-center flex-1">
-              <span className="text-2xl">{fromPart?.avatar || '👤'}</span>
-              <p className="text-xs font-bold text-slate-800 mt-1">{fromPart?.name || 'Payer'}</p>
-              <span className="text-[10px] text-rose-600 font-semibold">Payer</span>
-            </div>
-
-            <div className="px-3 flex flex-col items-center justify-center">
-              <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-                <ArrowRight className="w-4 h-4" />
+        <form onSubmit={submit} className="p-5 space-y-5 overflow-y-auto">
+          {debts.length === 0 ? (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-center"><CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto mb-2" /><p className="font-extrabold text-emerald-900">Everyone is settled up</p><p className="text-sm text-emerald-700 mt-1">There is no outstanding payment to record.</p></div>
+          ) : (
+            <>
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
+                <div className="text-center flex-1"><span className="text-3xl">{from?.avatar || '👤'}</span><p className="text-sm font-extrabold text-slate-900 mt-1">{from?.name || 'Payer'}</p><span className="text-xs text-rose-600 font-semibold">pays</span></div>
+                <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-sm"><ArrowRight className="w-5 h-5" /></div>
+                <div className="text-center flex-1"><span className="text-3xl">{to?.avatar || '👤'}</span><p className="text-sm font-extrabold text-slate-900 mt-1">{to?.name || 'Receiver'}</p><span className="text-xs text-emerald-600 font-semibold">receives</span></div>
               </div>
-              <span className="text-[10px] text-slate-400 font-medium mt-1">Repays</span>
-            </div>
 
-            <div className="text-center flex-1">
-              <span className="text-2xl">{toPart?.avatar || '👤'}</span>
-              <p className="text-xs font-bold text-slate-800 mt-1">{toPart?.name || 'Receiver'}</p>
-              <span className="text-[10px] text-emerald-600 font-semibold">Receiver</span>
-            </div>
-          </div>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="text-sm font-bold text-slate-700 space-y-1.5">Who is paying?
+                  <select value={fromId} onChange={(event) => changeFrom(event.target.value)} className="w-full px-3 py-3 rounded-xl border border-slate-300 text-sm font-bold bg-white">
+                    {[...new Map(debts.map((debt) => [debt.from.id, debt.from])).values()].map((participant) => <option key={participant.id} value={participant.id}>{participant.avatar} {participant.name}</option>)}
+                  </select>
+                </label>
+                <label className="text-sm font-bold text-slate-700 space-y-1.5">Who receives?
+                  <select value={toId} onChange={(event) => changeTo(event.target.value)} className="w-full px-3 py-3 rounded-xl border border-slate-300 text-sm font-bold bg-white">
+                    {debts.filter((debt) => debt.from.id === fromId).map((debt) => <option key={debt.to.id} value={debt.to.id}>{debt.to.avatar} {debt.to.name}</option>)}
+                  </select>
+                </label>
+              </div>
 
-          {/* Select Payer */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Who is paying?</label>
-            <select
-              value={fromId}
-              onChange={(e) => setFromId(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 bg-slate-50/50 cursor-pointer"
-            >
-              {trip.participants.map((p) => (
-                <option key={p.id} value={p.id} disabled={p.id === toId}>
-                  {p.avatar} {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="grid grid-cols-[1fr_140px] gap-3">
+                <label className="text-sm font-bold text-slate-700 space-y-1.5">Payment amount
+                  <div className="relative"><span className="absolute left-3.5 top-3 text-emerald-700 font-black">{trip.currencySymbol}</span><input type="number" inputMode="decimal" min="0.01" max={maxAmount || undefined} step="0.01" required value={amountStr} onChange={(event) => setAmountStr(event.target.value)} className="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-300 text-base font-black" /></div>
+                  <span className="block text-xs font-medium text-slate-500">Outstanding: {trip.currencySymbol} {maxAmount.toLocaleString()}</span>
+                  {amount > maxAmount && <span className="block text-xs font-semibold text-rose-600">Amount cannot exceed the outstanding balance.</span>}
+                </label>
+                <label className="text-sm font-bold text-slate-700 space-y-1.5">Payment date
+                  <input type="date" required value={date} onChange={(event) => setDate(event.target.value)} className="w-full px-3 py-3 rounded-xl border border-slate-300 text-sm font-semibold" />
+                </label>
+              </div>
 
-          {/* Select Receiver */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Who receives payment?</label>
-            <select
-              value={toId}
-              onChange={(e) => setToId(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-900 bg-slate-50/50 cursor-pointer"
-            >
-              {trip.participants.map((p) => (
-                <option key={p.id} value={p.id} disabled={p.id === fromId}>
-                  {p.avatar} {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              <label className="block text-sm font-bold text-slate-700 space-y-1.5">Notes <span className="font-medium text-slate-400">(optional)</span><input type="text" placeholder="Cash, eSewa, bank transfer…" value={notes} onChange={(event) => setNotes(event.target.value)} className="w-full px-3.5 py-3 rounded-xl border border-slate-300 text-sm" /></label>
+            </>
+          )}
 
-          {/* Amount Input */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Payment Amount ({trip.currencySymbol})
-            </label>
-            <div className="relative">
-              <span className="absolute left-3.5 top-2.5 text-xs font-bold text-emerald-600">
-                {trip.currencySymbol}
-              </span>
-              <input
-                type="number"
-                step="any"
-                required
-                placeholder="0.00"
-                value={amountStr}
-                onChange={(e) => setAmountStr(e.target.value)}
-                className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 text-sm font-extrabold text-slate-900 bg-slate-50/50"
-              />
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="pt-2 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-1/3 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!isFormValid}
-              className="w-2/3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              Confirm Settlement
-            </button>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="w-1/3 min-h-12 rounded-xl border border-slate-300 text-slate-700 font-bold text-sm hover:bg-slate-100 cursor-pointer">Cancel</button>
+            {debts.length > 0 && <button type="submit" disabled={!valid} className="w-2/3 min-h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed">{settlement ? 'Save Changes' : 'Confirm Settlement'}</button>}
           </div>
         </form>
       </div>
     </div>
   );
+}
+
+export default function SettleUpModal({ trip, isOpen, presetDebt, settlementToEdit, onClose, onSaveSettlement }: SettleUpModalProps) {
+  if (!isOpen) return null;
+  return <SettlementForm key={settlementToEdit?.id || `${presetDebt?.id || 'first'}-${trip.settlements.length}`} trip={trip} presetDebt={presetDebt} settlement={settlementToEdit} onClose={onClose} onSaveSettlement={onSaveSettlement} />;
 }

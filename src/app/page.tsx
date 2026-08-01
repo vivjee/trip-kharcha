@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Trip, Expense, Settlement, SimplifiedDebt, Participant, AuditLogEntry, UserProfile } from '@/types/trip';
+import { Trip, Expense, Settlement, SimplifiedDebt, Participant, UserProfile } from '@/types/trip';
 import { calculateSimplifiedDebts } from '@/lib/debt-simplification';
 import { loadTripsFromStorage, saveTripsToStorage, loadUserProfileFromStorage, saveUserProfileToStorage } from '@/lib/storage';
+import { appendAuditLog, createAuditEntry } from '@/lib/audit';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -34,6 +35,7 @@ export default function Home() {
   const [activeTripId, setActiveTripId] = useState<string>('');
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [identityByTripId, setIdentityByTripId] = useState<Record<string, string>>({});
 
   // Toast notification state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -58,35 +60,56 @@ export default function Home() {
   const [isClaimIdentityOpen, setIsClaimIdentityOpen] = useState(false);
   const [currentParticipantId, setCurrentParticipantId] = useState<string>('');
   const [presetDebt, setPresetDebt] = useState<SimplifiedDebt | undefined>(undefined);
+  const [expenseToEdit, setExpenseToEdit] = useState<Expense | undefined>(undefined);
+  const [settlementToEdit, setSettlementToEdit] = useState<Settlement | undefined>(undefined);
 
   // Load from LocalStorage on mount
   useEffect(() => {
-    const data = loadTripsFromStorage();
-    setTrips(data.trips);
-    setActiveTripId(data.activeTripId);
-
-    const savedProfile = loadUserProfileFromStorage();
-    if (savedProfile) {
+    const timer = window.setTimeout(() => {
+      const data = loadTripsFromStorage();
+      const savedProfile = loadUserProfileFromStorage();
+      setTrips(data.trips);
+      setActiveTripId(data.activeTripId);
+      setIdentityByTripId(data.identityByTripId);
       setUserProfile(savedProfile);
-      setCurrentParticipantId(savedProfile.id);
-    }
 
-    setIsLoaded(true);
+      const activeTrip = data.trips.find((trip) => trip.id === data.activeTripId);
+      const linkedParticipant = activeTrip?.participants.find((participant) =>
+        participant.id === data.identityByTripId[activeTrip.id]
+        || participant.profileId === savedProfile?.id
+        || participant.id === savedProfile?.id,
+      );
+      setCurrentParticipantId(linkedParticipant?.id || '');
+      setIsLoaded(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleSaveProfile = (profile: UserProfile) => {
+    const previousProfile = userProfile;
     setUserProfile(profile);
     saveUserProfileToStorage(profile);
-    setCurrentParticipantId(profile.id);
+    setTrips((currentTrips) => currentTrips.map((trip) => ({
+      ...trip,
+      participants: trip.participants.map((participant) => {
+        const identityId = identityByTripId[trip.id];
+        const isSameProfile = participant.profileId === profile.id
+          || participant.id === profile.id
+          || participant.id === identityId
+          || (!participant.profileId && previousProfile?.name === participant.name && participant.id === identityId);
+        return isSameProfile
+          ? { ...participant, profileId: profile.id, name: profile.name, avatar: profile.avatar, photoId: profile.photoId }
+          : participant;
+      }),
+    })));
+    setCurrentParticipantId(activeTripId ? identityByTripId[activeTripId] || profile.id : profile.id);
     showToast(`Profile set to ${profile.avatar} ${profile.name}!`);
   };
 
   // Save to LocalStorage on updates
   useEffect(() => {
-    if (isLoaded && trips.length > 0) {
-      saveTripsToStorage(trips, activeTripId);
-    }
-  }, [trips, activeTripId, isLoaded]);
+    if (isLoaded) saveTripsToStorage(trips, activeTripId, identityByTripId);
+  }, [trips, activeTripId, identityByTripId, isLoaded]);
 
   if (!isLoaded) {
     return (
@@ -109,6 +132,13 @@ export default function Home() {
   const handleSelectTrip = (id: string) => {
     setActiveTripId(id);
     setActiveTab('dashboard');
+    const trip = trips.find((item) => item.id === id);
+    const participant = trip?.participants.find((item) =>
+      item.id === identityByTripId[id]
+      || item.profileId === userProfile?.id
+      || item.id === userProfile?.id,
+    );
+    setCurrentParticipantId(participant?.id || '');
   };
 
   const handleCloseTrip = () => {
@@ -125,52 +155,76 @@ export default function Home() {
       id: newId,
       status: 'active',
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       expenses: [],
       settlements: [],
+      auditLogs: [],
     };
+
+    const actor = newTrip.participants.find((participant) => participant.id === hostParticipantId);
+    newTrip.auditLogs = [createAuditEntry('CREATE_TRIP', `Created trip “${newTrip.name}”`, actor)];
 
     setTrips([newTrip, ...trips]);
     setActiveTripId(newId);
 
     if (hostParticipantId) {
       setCurrentParticipantId(hostParticipantId);
+      setIdentityByTripId((current) => ({ ...current, [newId]: hostParticipantId }));
     }
 
     showToast(`Trip "${newTrip.name}" created!`);
   };
 
-  const handleAddExpense = (expenseData: Omit<Expense, 'id'>) => {
+  const handleSaveExpense = (expenseData: Omit<Expense, 'id'>, expenseId?: string) => {
     if (!currentTrip) return;
-
-    const newExpense: Expense = {
+    const actor = currentTrip.participants.find((participant) => participant.id === currentParticipantId);
+    const now = new Date().toISOString();
+    const savedExpense: Expense = {
       ...expenseData,
-      id: `exp-${Date.now()}`,
+      id: expenseId || `exp-${Date.now()}`,
+      createdAt: expenseData.createdAt || now,
+      updatedAt: now,
+      createdByParticipantId: expenseData.createdByParticipantId || actor?.id,
     };
-
-    const updatedTrip: Trip = {
-      ...currentTrip,
-      expenses: [newExpense, ...currentTrip.expenses],
-    };
-
-    setTrips(trips.map((t) => (t.id === currentTrip.id ? updatedTrip : t)));
-    showToast(`Added ${newExpense.title} (रू ${newExpense.amount})`);
+    const expenses = expenseId
+      ? currentTrip.expenses.map((expense) => expense.id === expenseId ? savedExpense : expense)
+      : [savedExpense, ...currentTrip.expenses];
+    const updatedTrip = appendAuditLog(
+      { ...currentTrip, expenses },
+      expenseId ? 'EDIT_EXPENSE' : 'ADD_EXPENSE',
+      `${expenseId ? 'Updated' : 'Added'} ${savedExpense.title} (${currentTrip.currencySymbol} ${savedExpense.amount.toLocaleString()})`,
+      actor,
+    );
+    setTrips(trips.map((trip) => trip.id === currentTrip.id ? updatedTrip : trip));
+    setExpenseToEdit(undefined);
+    showToast(`${expenseId ? 'Updated' : 'Added'} ${savedExpense.title}`);
   };
 
-  const handleAddSettlement = (settlementData: Omit<Settlement, 'id'>) => {
+  const handleSaveSettlement = (settlementData: Omit<Settlement, 'id'>, settlementId?: string) => {
     if (!currentTrip) return;
-
-    const newSettlement: Settlement = {
+    const actor = currentTrip.participants.find((participant) => participant.id === currentParticipantId);
+    const now = new Date().toISOString();
+    const savedSettlement: Settlement = {
       ...settlementData,
-      id: `set-${Date.now()}`,
+      id: settlementId || `set-${Date.now()}`,
+      createdAt: settlementData.createdAt || now,
+      updatedAt: now,
+      createdByParticipantId: settlementData.createdByParticipantId || actor?.id,
     };
-
-    const updatedTrip: Trip = {
-      ...currentTrip,
-      settlements: [newSettlement, ...currentTrip.settlements],
-    };
-
-    setTrips(trips.map((t) => (t.id === currentTrip.id ? updatedTrip : t)));
-    showToast('Settlement recorded successfully');
+    const settlements = settlementId
+      ? currentTrip.settlements.map((settlement) => settlement.id === settlementId ? savedSettlement : settlement)
+      : [savedSettlement, ...currentTrip.settlements];
+    const from = currentTrip.participants.find((participant) => participant.id === savedSettlement.fromParticipantId);
+    const to = currentTrip.participants.find((participant) => participant.id === savedSettlement.toParticipantId);
+    const updatedTrip = appendAuditLog(
+      { ...currentTrip, settlements },
+      settlementId ? 'EDIT_SETTLEMENT' : 'RECORD_SETTLEMENT',
+      `${from?.name || 'A member'} paid ${to?.name || 'a member'} ${currentTrip.currencySymbol} ${savedSettlement.amount.toLocaleString()}`,
+      actor,
+    );
+    setTrips(trips.map((trip) => trip.id === currentTrip.id ? updatedTrip : trip));
+    setSettlementToEdit(undefined);
+    showToast(settlementId ? 'Settlement updated' : 'Settlement recorded');
   };
 
   const handleToggleTripStatus = () => {
@@ -179,15 +233,27 @@ export default function Home() {
     if (newStatus === 'completed') {
       setIsCompleteTripOpen(true);
     } else {
-      const updatedTrip: Trip = { ...currentTrip, status: newStatus };
+      const actor = currentTrip.participants.find((participant) => participant.id === currentParticipantId);
+      const updatedTrip = appendAuditLog(
+        { ...currentTrip, status: newStatus, endDate: undefined },
+        'REOPEN_TRIP',
+        `Reopened trip “${currentTrip.name}”`,
+        actor,
+      );
       setTrips(trips.map((t) => (t.id === currentTrip.id ? updatedTrip : t)));
       showToast('Trip status updated to Active');
     }
   };
 
-  const handleConfirmCompleteTrip = () => {
+  const handleConfirmCompleteTrip = (endDate: string) => {
     if (!currentTrip) return;
-    const updatedTrip: Trip = { ...currentTrip, status: 'completed' };
+    const actor = currentTrip.participants.find((participant) => participant.id === currentParticipantId);
+    const updatedTrip = appendAuditLog(
+      { ...currentTrip, status: 'completed', endDate },
+      'COMPLETE_TRIP',
+      `Completed trip “${currentTrip.name}”`,
+      actor,
+    );
     setTrips(trips.map((t) => (t.id === currentTrip.id ? updatedTrip : t)));
     setIsCompleteTripOpen(false);
     showToast(`Trip "${currentTrip.name}" marked as Completed!`);
@@ -206,17 +272,26 @@ export default function Home() {
       participants: [...currentTrip.participants, newParticipant],
     };
 
-    setTrips(trips.map((t) => (t.id === currentTrip.id ? updatedTrip : t)));
+    const actor = currentTrip.participants.find((participant) => participant.id === currentParticipantId);
+    const auditedTrip = appendAuditLog(
+      updatedTrip,
+      'ADD_PARTICIPANT',
+      `Added ${newParticipant.name} to the trip`,
+      actor,
+    );
+    setTrips(trips.map((t) => (t.id === currentTrip.id ? auditedTrip : t)));
     showToast(`Added ${newParticipant.name} to trip`);
   };
 
   const handleDeleteExpense = (expenseId: string) => {
     if (!currentTrip) return;
 
-    const updatedTrip: Trip = {
+    const removed = currentTrip.expenses.find((expense) => expense.id === expenseId);
+    const actor = currentTrip.participants.find((participant) => participant.id === currentParticipantId);
+    const updatedTrip = appendAuditLog({
       ...currentTrip,
       expenses: currentTrip.expenses.filter((e) => e.id !== expenseId),
-    };
+    }, 'DELETE_EXPENSE', `Deleted ${removed?.title || 'an expense'}`, actor);
 
     setTrips(trips.map((t) => (t.id === currentTrip.id ? updatedTrip : t)));
     showToast('Expense removed');
@@ -225,10 +300,13 @@ export default function Home() {
   const handleDeleteSettlement = (settlementId: string) => {
     if (!currentTrip) return;
 
-    const updatedTrip: Trip = {
+    const removed = currentTrip.settlements.find((settlement) => settlement.id === settlementId);
+    const from = currentTrip.participants.find((participant) => participant.id === removed?.fromParticipantId);
+    const actor = currentTrip.participants.find((participant) => participant.id === currentParticipantId);
+    const updatedTrip = appendAuditLog({
       ...currentTrip,
       settlements: currentTrip.settlements.filter((s) => s.id !== settlementId),
-    };
+    }, 'DELETE_SETTLEMENT', `Deleted settlement from ${from?.name || 'a member'}`, actor);
 
     setTrips(trips.map((t) => (t.id === currentTrip.id ? updatedTrip : t)));
     showToast('Settlement removed');
@@ -244,6 +322,11 @@ export default function Home() {
         const nextTripId = remainingTrips[0]?.id || '';
         setActiveTripId(nextTripId);
       }
+      setIdentityByTripId((current) => {
+        const next = { ...current };
+        delete next[tripId];
+        return next;
+      });
 
       showToast('Trip deleted');
     }
@@ -253,12 +336,19 @@ export default function Home() {
     if (confirm('Clear all trip data and reset to a clean slate?')) {
       setTrips([]);
       setActiveTripId('');
+      setIdentityByTripId({});
       showToast('All trip data cleared');
     }
   };
 
   const handleOpenSettleUpWithDebt = (debt?: SimplifiedDebt) => {
-    setPresetDebt(debt);
+    const targetDebt = debt || simplifiedDebts[0];
+    if (!targetDebt) {
+      showToast('Everyone is already settled up');
+      return;
+    }
+    setSettlementToEdit(undefined);
+    setPresetDebt(targetDebt);
     setIsSettleUpOpen(true);
   };
 
@@ -352,7 +442,10 @@ export default function Home() {
               <TripDashboard
                 trip={currentTrip}
                 simplifiedDebts={simplifiedDebts}
-                onOpenAddExpense={() => setIsAddExpenseOpen(true)}
+                onOpenAddExpense={() => {
+                  setExpenseToEdit(undefined);
+                  setIsAddExpenseOpen(true);
+                }}
                 onOpenSettleUp={(debt) => handleOpenSettleUpWithDebt(debt)}
                 onOpenAddParticipant={() => setIsAddParticipantOpen(true)}
                 onNavigateTab={(tab) => setActiveTab(tab)}
@@ -370,7 +463,14 @@ export default function Home() {
             >
               <ExpensesView
                 trip={currentTrip}
-                onOpenAddExpense={() => setIsAddExpenseOpen(true)}
+                onOpenAddExpense={() => {
+                  setExpenseToEdit(undefined);
+                  setIsAddExpenseOpen(true);
+                }}
+                onEditExpense={(expense) => {
+                  setExpenseToEdit(expense);
+                  setIsAddExpenseOpen(true);
+                }}
                 onDeleteExpense={handleDeleteExpense}
               />
             </motion.div>
@@ -388,6 +488,11 @@ export default function Home() {
                 trip={currentTrip}
                 simplifiedDebts={simplifiedDebts}
                 onOpenSettleUp={handleOpenSettleUpWithDebt}
+                onEditSettlement={(settlement) => {
+                  setPresetDebt(undefined);
+                  setSettlementToEdit(settlement);
+                  setIsSettleUpOpen(true);
+                }}
                 onDeleteSettlement={handleDeleteSettlement}
               />
             </motion.div>
@@ -430,19 +535,25 @@ export default function Home() {
       <AddExpenseModal
         trip={currentTrip}
         isOpen={isAddExpenseOpen}
-        onClose={() => setIsAddExpenseOpen(false)}
-        onSaveExpense={handleAddExpense}
+        expenseToEdit={expenseToEdit}
+        onClose={() => {
+          setIsAddExpenseOpen(false);
+          setExpenseToEdit(undefined);
+        }}
+        onSaveExpense={handleSaveExpense}
       />
 
       <SettleUpModal
         trip={currentTrip}
         presetDebt={presetDebt}
+        settlementToEdit={settlementToEdit}
         isOpen={isSettleUpOpen}
         onClose={() => {
           setIsSettleUpOpen(false);
           setPresetDebt(undefined);
+          setSettlementToEdit(undefined);
         }}
-        onConfirmSettlement={handleAddSettlement}
+        onSaveSettlement={handleSaveSettlement}
       />
 
       <TripModal
@@ -496,8 +607,13 @@ export default function Home() {
         onClose={() => setIsClaimIdentityOpen(false)}
         onClaimIdentity={(partId) => {
           setCurrentParticipantId(partId);
+          setIdentityByTripId((current) => ({ ...current, [currentTrip.id]: partId }));
           const p = currentTrip.participants.find((item) => item.id === partId);
-          if (p) showToast(`Identity switched to ${p.name}`);
+          if (p) {
+            const updatedTrip = appendAuditLog(currentTrip, 'CLAIM_IDENTITY', `${p.name} claimed this device identity`, p);
+            setTrips(trips.map((trip) => trip.id === currentTrip.id ? updatedTrip : trip));
+            showToast(`Identity switched to ${p.name}`);
+          }
         }}
       />
     </MobileFrame>

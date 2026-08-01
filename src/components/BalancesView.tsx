@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { Trip, SimplifiedDebt } from '@/types/trip';
-import { calculateParticipantBalances, getTripStats } from '@/lib/debt-simplification';
-import { ArrowRight, CheckCircle2, Sparkles, Trophy } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import React from 'react';
+import { Settlement, Trip, SimplifiedDebt } from '@/types/trip';
+import { calculateParticipantBalances, getSettlementProgress } from '@/lib/debt-simplification';
+import { ArrowRight, CheckCircle2, Sparkles, Trophy, Pencil, Trash2, History } from 'lucide-react';
+import { formatSingleDate } from '@/lib/date-utils';
 
 interface BalancesViewProps {
   trip: Trip;
   simplifiedDebts: SimplifiedDebt[];
   onOpenSettleUp: (debt?: SimplifiedDebt) => void;
+  onEditSettlement: (settlement: Settlement) => void;
   onDeleteSettlement: (settlementId: string) => void;
 }
 
@@ -17,19 +18,12 @@ export default function BalancesView({
   trip,
   simplifiedDebts,
   onOpenSettleUp,
+  onEditSettlement,
   onDeleteSettlement,
 }: BalancesViewProps) {
   const balances = calculateParticipantBalances(trip);
-  const stats = getTripStats(trip);
-
-  const pendingTotal = simplifiedDebts.reduce((sum, d) => sum + d.amount, 0);
-  const totalSpent = stats.totalSpent;
-
-  // Calculate Settlement Progress Percentage
-  const settledPct =
-    totalSpent > 0
-      ? Math.max(0, Math.min(100, Math.round(((totalSpent - pendingTotal) / totalSpent) * 100)))
-      : 100;
+  const progress = getSettlementProgress(trip, simplifiedDebts);
+  const getParticipant = (id: string) => trip.participants.find((participant) => participant.id === id);
 
   return (
     <div className="p-4 space-y-4 animate-pop-in">
@@ -50,12 +44,12 @@ export default function BalancesView({
           </div>
           <span
             className={`text-xs font-black px-2.5 py-0.5 rounded-full ${
-              settledPct === 100
+              progress.percentage === 100
                 ? 'bg-emerald-500 text-white'
                 : 'bg-indigo-500/30 text-indigo-300 border border-indigo-400/30'
             }`}
           >
-            {settledPct}% Settled
+            {progress.percentage}% Settled
           </span>
         </div>
 
@@ -63,14 +57,43 @@ export default function BalancesView({
         <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700">
           <div
             className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 rounded-full transition-all duration-500 shadow-sm"
-            style={{ width: `${settledPct}%` }}
+            style={{ width: `${progress.percentage}%` }}
           />
         </div>
 
         <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium pt-0.5">
-          <span>Pending: {trip.currencySymbol} {pendingTotal.toLocaleString()}</span>
-          <span>Total Spent: {trip.currencySymbol} {totalSpent.toLocaleString()}</span>
+          <span>Recorded: {trip.currencySymbol} {progress.recorded.toLocaleString()}</span>
+          <span>Pending: {trip.currencySymbol} {progress.pending.toLocaleString()}</span>
         </div>
+      </div>
+
+      <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div className="flex items-center gap-1.5">
+          <History className="w-4 h-4 text-emerald-600" />
+          <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">Recorded Settlements ({trip.settlements.length})</h3>
+        </div>
+        {trip.settlements.length === 0 ? (
+          <p className="text-sm text-slate-400 text-center py-4">No payments recorded yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {trip.settlements.map((settlement) => {
+              const from = getParticipant(settlement.fromParticipantId);
+              const to = getParticipant(settlement.toParticipantId);
+              return (
+                <div key={settlement.id} className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-900 truncate">{from?.avatar} {from?.name} paid {to?.avatar} {to?.name}</p>
+                    <p className="text-xs text-slate-500">{formatSingleDate(settlement.date)} · {trip.currencySymbol} {settlement.amount.toLocaleString()}</p>
+                  </div>
+                  <div className="flex flex-shrink-0">
+                    <button onClick={() => onEditSettlement(settlement)} aria-label={`Edit settlement from ${from?.name}`} className="w-10 h-10 rounded-xl text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 flex items-center justify-center cursor-pointer"><Pencil className="w-4 h-4" /></button>
+                    <button onClick={() => { if (window.confirm('Delete this settlement? Balances will be recalculated.')) onDeleteSettlement(settlement.id); }} aria-label={`Delete settlement from ${from?.name}`} className="w-10 h-10 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center cursor-pointer"><Trash2 className="w-4 h-4" /></button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Simplified Debts Section (Optimal Payments needed) */}
