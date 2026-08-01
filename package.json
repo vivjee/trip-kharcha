@@ -10,7 +10,7 @@
     "lint": "eslint",
     "test": "node --test src/lib/date-utils.test.ts src/lib/debt-simplification.test.ts",
     "cap:sync": "next build && npx cap sync",
-    "apk:build": "next build && npx cap sync android && cd android && $env:GRADLE_USER_HOME=\"C:\\gradle_cache\"; .\\gradlew.bat --no-daemon assembleDebug"
+    "apk:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
