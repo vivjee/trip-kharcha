@@ -26,7 +26,6 @@ export default function ZeroStateIntro({
           src="/images/nepal_hero.jpg"
           alt="Nepal Mountain Landscape"
           fill
-          quality={90}
           priority
           className="object-cover object-center scale-105 filter brightness-[0.55] contrast-110"
         />

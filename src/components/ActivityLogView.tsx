@@ -77,6 +77,7 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
           <div className="flex items-center gap-1 bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs">
             <Filter className="w-3 h-3 text-slate-400" />
             <select
+              aria-label="Filter activity by member"
               value={filterParticipantId}
               onChange={(e) => setFilterParticipantId(e.target.value)}
               className="text-[10px] font-extrabold text-slate-700 bg-transparent focus:outline-none cursor-pointer"

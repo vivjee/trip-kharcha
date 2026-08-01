@@ -176,9 +176,9 @@ export default function TripDashboard({
                   }`}
                 >
                   {b.netBalance > 0
-                    ? `+${trip.currencySymbol}${b.netBalance.toLocaleString()}`
+                    ? `+ ${trip.currencySymbol} ${b.netBalance.toLocaleString()}`
                     : b.netBalance < 0
-                    ? `-${trip.currencySymbol}${Math.abs(b.netBalance).toLocaleString()}`
+                    ? `− ${trip.currencySymbol} ${Math.abs(b.netBalance).toLocaleString()}`
                     : 'Settled'}
                 </p>
               </div>

@@ -15,18 +15,31 @@ const drawRoundedRect = (context: CanvasRenderingContext2D, x: number, y: number
   context.fill();
 };
 
+const loadBlobImage = (blob: Blob) => new Promise<HTMLImageElement>((resolve, reject) => {
+  const url = URL.createObjectURL(blob);
+  const image = new Image();
+  image.onload = () => {
+    URL.revokeObjectURL(url);
+    resolve(image);
+  };
+  image.onerror = () => {
+    URL.revokeObjectURL(url);
+    reject(new Error('The trip cover could not be added to the share card.'));
+  };
+  image.src = url;
+});
+
 async function drawCover(context: CanvasRenderingContext2D, trip: Trip) {
   if (!trip.coverPhotoId) return false;
   const blob = await loadStoredPhoto(trip.coverPhotoId);
   if (!blob) return false;
-  const bitmap = await createImageBitmap(blob);
+  const image = await loadBlobImage(blob);
   const targetWidth = 1080;
   const targetHeight = 520;
-  const scale = Math.max(targetWidth / bitmap.width, targetHeight / bitmap.height);
-  const width = bitmap.width * scale;
-  const height = bitmap.height * scale;
-  context.drawImage(bitmap, (targetWidth - width) / 2, (targetHeight - height) / 2, width, height);
-  bitmap.close();
+  const scale = Math.max(targetWidth / image.naturalWidth, targetHeight / image.naturalHeight);
+  const width = image.naturalWidth * scale;
+  const height = image.naturalHeight * scale;
+  context.drawImage(image, (targetWidth - width) / 2, (targetHeight - height) / 2, width, height);
   return true;
 }
 
