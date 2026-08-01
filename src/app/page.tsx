@@ -373,6 +373,23 @@ export default function Home() {
     showToast(photoId ? 'Trip cover updated' : 'Trip cover removed');
   };
 
+  const handleImportTrip = (importedTrip: Trip) => {
+    const actor = importedTrip.participants.find((participant) =>
+      participant.profileId === userProfile?.id
+      || participant.id === userProfile?.id
+      || participant.name === userProfile?.name,
+    );
+    const tripWithAudit = appendAuditLog(importedTrip, 'IMPORT_TRIP', `Imported backup of “${importedTrip.name.replace(/ \(Imported\)$/, '')}”`, actor);
+    setTrips([tripWithAudit, ...trips]);
+    setActiveTripId(tripWithAudit.id);
+    setActiveTab('dashboard');
+    if (actor) {
+      setCurrentParticipantId(actor.id);
+      setIdentityByTripId((current) => ({ ...current, [tripWithAudit.id]: actor.id }));
+    }
+    showToast(`Imported ${tripWithAudit.name}`);
+  };
+
   // Case 1: Zero Trips Exist
   if (trips.length === 0) {
     return (
@@ -620,6 +637,7 @@ export default function Home() {
         isOpen={isSyncModalOpen}
         onClose={() => setIsSyncModalOpen(false)}
         onOpenClaimIdentity={() => setIsClaimIdentityOpen(true)}
+        onImportTrip={handleImportTrip}
       />
 
       <ClaimIdentityModal

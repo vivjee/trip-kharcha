@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Trip, SimplifiedDebt } from '@/types/trip';
-import { getTripStats, calculateParticipantBalances } from '@/lib/debt-simplification';
-import { getTripDurationInDays, formatDateRange } from '@/lib/date-utils';
-import { X, Check, Download, Share2, MessageCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { Check, Download, ImageDown, LoaderCircle, MessageCircle, Share2, X } from 'lucide-react';
+import { formatDateRange, getTripDurationInDays } from '@/lib/date-utils';
+import { calculateParticipantBalances, getTripStats } from '@/lib/debt-simplification';
+import { createShareCard } from '@/lib/share-card';
+import { SimplifiedDebt, Trip } from '@/types/trip';
 
 interface ShareSummaryModalProps {
   trip: Trip;
@@ -14,136 +15,85 @@ interface ShareSummaryModalProps {
   onClose: () => void;
 }
 
-export default function ShareSummaryModal({
-  trip,
-  simplifiedDebts,
-  isOpen,
-  onClose,
-}: ShareSummaryModalProps) {
-  const [copied, setCopied] = useState(false);
+const safeFilename = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 
+export default function ShareSummaryModal({ trip, simplifiedDebts, isOpen, onClose }: ShareSummaryModalProps) {
+  const [copied, setCopied] = useState(false);
+  const [creatingCard, setCreatingCard] = useState(false);
+  const [error, setError] = useState('');
   if (!isOpen) return null;
 
   const stats = getTripStats(trip);
   const balances = calculateParticipantBalances(trip);
-  const durationDays = getTripDurationInDays(trip);
-  const dateRangeStr = formatDateRange(trip);
+  const duration = getTripDurationInDays(trip);
+  const lines = [
+    `${trip.coverImageEmoji} *${trip.name}* — Trip Summary`,
+    `🗓️ *Dates:* ${formatDateRange(trip)} (${duration} ${duration === 1 ? 'day' : 'days'})`,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `💰 *Total Spent:* ${trip.currencySymbol} ${stats.totalSpent.toLocaleString()} (${trip.currency})`,
+    `📈 *Daily Pace:* ${trip.currencySymbol} ${Math.round(stats.totalSpent / duration).toLocaleString()} / day`,
+    `👥 *Average / Person:* ${trip.currencySymbol} ${stats.perPersonAvg.toLocaleString()}`,
+    `🧾 *Total Expenses:* ${stats.totalExpensesCount}`,
+    '',
+    '✨ *PAYMENTS TO SETTLE:*',
+    ...(simplifiedDebts.length
+      ? simplifiedDebts.map((debt, index) => `${index + 1}. *${debt.from.name}* → *${debt.to.name}*: ${trip.currencySymbol} ${debt.amount.toLocaleString()}`)
+      : ['🎉 All debts are fully settled!']),
+    '',
+    '📊 *WHO PAID WHAT:*',
+    ...balances.map((balance) => `• ${balance.avatar} *${balance.participantName}*: ${trip.currencySymbol} ${balance.totalPaid.toLocaleString()}`),
+    '',
+    'Shared via Trip Calculator v2 🏔️',
+  ];
+  const summaryText = lines.join('\n');
 
-  // Generate plain text report formatted for WhatsApp / SMS / Notes
-  const generateSummaryText = () => {
-    let text = `${trip.coverImageEmoji} *${trip.name}* - Trip Summary\n`;
-    text += `🗓️ *Dates:* ${dateRangeStr} (${durationDays} Days)\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `💰 *Total Spent:* ${trip.currencySymbol} ${stats.totalSpent.toLocaleString()} (${trip.currency})\n`;
-    text += `📈 *Daily Pace:* ${trip.currencySymbol} ${Math.round(stats.totalSpent / durationDays).toLocaleString()} / day\n`;
-    text += `👥 *Average / Person:* ${trip.currencySymbol} ${stats.perPersonAvg.toLocaleString()}\n`;
-    text += `🧾 *Total Expenses:* ${stats.totalExpensesCount} items\n\n`;
-
-    text += `✨ *PAYMENTS TO SETTLE UP:* ✨\n`;
-    if (simplifiedDebts.length === 0) {
-      text += `🎉 All debts are fully settled up!\n\n`;
-    } else {
-      simplifiedDebts.forEach((debt, i) => {
-        text += `${i + 1}. *${debt.from.name}* ➔ *${debt.to.name}*: ${trip.currencySymbol} ${debt.amount.toLocaleString()}\n`;
-      });
-      text += `\n`;
-    }
-
-    text += `📊 *WHO PAID WHAT:* \n`;
-    balances.forEach((b) => {
-      const balanceStr =
-        b.netBalance > 0
-          ? `(gets back ${trip.currencySymbol} ${b.netBalance.toLocaleString()})`
-          : b.netBalance < 0
-          ? `(owes ${trip.currencySymbol} ${Math.abs(b.netBalance).toLocaleString()})`
-          : `(settled)`;
-      text += `• ${b.avatar} *${b.participantName}*: ${trip.currencySymbol} ${b.totalPaid.toLocaleString()} ${balanceStr}\n`;
-    });
-
-    text += `\nShared via Trip Calculator 🏔️`;
-    return text;
+  const download = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
   };
 
-  const summaryText = generateSummaryText();
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(summaryText);
+  const copyText = async () => {
+    await navigator.clipboard.writeText(summaryText);
     setCopied(true);
-    confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
-    setTimeout(() => setCopied(false), 2500);
+    confetti({ particleCount: 35, spread: 45, origin: { y: 0.75 } });
+    window.setTimeout(() => setCopied(false), 2200);
   };
 
-  const handleDownload = () => {
-    const element = document.createElement('a');
-    const file = new Blob([summaryText], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `${trip.name.toLowerCase().replace(/\s+/g, '_')}_summary.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+  const shareCard = async () => {
+    setCreatingCard(true);
+    setError('');
+    try {
+      const blob = await createShareCard(trip, simplifiedDebts);
+      const file = new File([blob], `${safeFilename(trip.name)}_summary.png`, { type: 'image/png' });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ title: `${trip.name} summary`, text: 'Trip Calculator v2 summary', files: [file] });
+      } else {
+        download(blob, file.name);
+      }
+    } catch (caught) {
+      if (caught instanceof DOMException && caught.name === 'AbortError') return;
+      setError(caught instanceof Error ? caught.message : 'Unable to create the share card.');
+    } finally {
+      setCreatingCard(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-4 animate-pop-in">
-      <div className="w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-indigo-50/60">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
-              <Share2 className="w-4 h-4" />
-            </div>
-            <h2 className="text-sm font-bold text-slate-900">Share Trip Summary</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 rounded-full bg-slate-200/60 flex items-center justify-center text-slate-600 hover:bg-slate-300 transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-sm flex items-end md:items-center justify-center md:p-4 animate-pop-in" role="dialog" aria-modal="true" aria-labelledby="share-title">
+      <div className="w-full max-w-md bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[94dvh]">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-indigo-50"><div className="flex items-center gap-2.5"><div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center"><Share2 className="w-5 h-5" /></div><div><h2 id="share-title" className="text-base font-extrabold text-slate-900">Share Trip Summary</h2><p className="text-xs text-slate-500">Text or a temporary visual card</p></div></div><button onClick={onClose} aria-label="Close share summary" className="w-11 h-11 -mr-2 rounded-full bg-slate-200/70 flex items-center justify-center cursor-pointer"><X className="w-5 h-5" /></button></div>
 
-        {/* Text Preview Box */}
-        <div className="p-5 space-y-4 overflow-y-auto no-scrollbar">
-          <div className="relative">
-            <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1">
-              <span>Group Chat Preview</span>
-              <span className="text-[10px] text-slate-400 font-medium">WhatsApp / Viber ready</span>
-            </div>
-            <textarea
-              readOnly
-              rows={10}
-              value={summaryText}
-              className="w-full p-3.5 rounded-2xl border border-slate-200 bg-slate-50 font-mono text-xs text-slate-800 focus:outline-none select-all"
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="space-y-2">
-            <button
-              onClick={handleCopy}
-              className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  <span>Copied to Clipboard!</span>
-                </>
-              ) : (
-                <>
-                  <MessageCircle className="w-4 h-4" />
-                  <span>Copy for WhatsApp / Group Chat</span>
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={handleDownload}
-              className="w-full py-2.5 rounded-2xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              <Download className="w-4 h-4 text-indigo-600" />
-              <span>Download Summary (.txt)</span>
-            </button>
-          </div>
+        <div className="p-5 space-y-4 overflow-y-auto">
+          <div><div className="flex items-center justify-between mb-2"><span className="text-sm font-bold text-slate-700">Group chat preview</span><span className="text-xs text-slate-400">WhatsApp / Viber ready</span></div><textarea readOnly rows={11} value={summaryText} aria-label="Trip summary text" className="w-full p-3.5 rounded-2xl border border-slate-200 bg-slate-50 font-mono text-xs leading-relaxed text-slate-800 focus:outline-none" /></div>
+          <button onClick={() => void shareCard()} disabled={creatingCard} className="w-full min-h-13 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-extrabold text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60">{creatingCard ? <LoaderCircle className="w-5 h-5 animate-spin" /> : <ImageDown className="w-5 h-5" />}{creatingCard ? 'Creating card…' : 'Share Visual Summary'}</button>
+          <p className="text-xs text-center text-slate-500 -mt-2">Generated only when requested. The app does not keep a screenshot.</p>
+          <button onClick={() => void copyText()} className="w-full min-h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer">{copied ? <Check className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}{copied ? 'Copied!' : 'Copy for Group Chat'}</button>
+          <button onClick={() => download(new Blob([summaryText], { type: 'text/plain' }), `${safeFilename(trip.name)}_summary.txt`)} className="w-full min-h-12 rounded-2xl border border-slate-300 text-slate-700 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer"><Download className="w-5 h-5 text-indigo-600" />Download Text Summary</button>
+          {error && <p role="alert" className="text-sm text-rose-600 font-semibold text-center">{error}</p>}
         </div>
       </div>
     </div>

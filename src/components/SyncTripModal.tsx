@@ -1,118 +1,81 @@
 'use client';
 
-import React, { useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import React, { useRef, useState } from 'react';
+import { ArchiveRestore, Download, FileUp, LoaderCircle, ShieldCheck, UserCheck, X } from 'lucide-react';
+import { createTripBackup, importTripBackup } from '@/lib/backup';
 import { Trip } from '@/types/trip';
-import { X, QrCode, Copy, Check, Radio, Wifi, ShieldCheck, UserCheck } from 'lucide-react';
 
 interface SyncTripModalProps {
   trip: Trip;
   isOpen: boolean;
   onClose: () => void;
   onOpenClaimIdentity: () => void;
+  onImportTrip: (trip: Trip) => void;
 }
 
-export default function SyncTripModal({
-  trip,
-  isOpen,
-  onClose,
-  onOpenClaimIdentity,
-}: SyncTripModalProps) {
-  const [copiedCode, setCopiedCode] = useState(false);
+const safeFilename = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 
+export default function SyncTripModal({ trip, isOpen, onClose, onOpenClaimIdentity, onImportTrip }: SyncTripModalProps) {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState<'export' | 'import' | null>(null);
+  const [message, setMessage] = useState('');
   if (!isOpen) return null;
 
-  const roomCode = trip.roomCode || `TRIP-${trip.id.slice(-4).toUpperCase()}`;
-  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}?code=${roomCode}` : roomCode;
+  const exportBackup = async () => {
+    setBusy('export');
+    setMessage('');
+    try {
+      const blob = await createTripBackup(trip);
+      const file = new File([blob], `${safeFilename(trip.name)}_backup.json`, { type: 'application/json' });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ title: `${trip.name} backup`, text: 'Trip Calculator v2 offline backup', files: [file] });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = file.name;
+        anchor.click();
+        URL.revokeObjectURL(url);
+      }
+      setMessage('Backup ready. Keep it somewhere safe.');
+    } catch (caught) {
+      if (!(caught instanceof DOMException && caught.name === 'AbortError')) setMessage('Could not create the backup.');
+    } finally {
+      setBusy(null);
+    }
+  };
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(roomCode);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2500);
+  const importBackup = async (file?: File) => {
+    if (!file) return;
+    setBusy('import');
+    setMessage('');
+    try {
+      const imported = await importTripBackup(file);
+      onImportTrip(imported);
+      onClose();
+    } catch (caught) {
+      setMessage(caught instanceof Error ? caught.message : 'Could not import this backup.');
+    } finally {
+      setBusy(null);
+      if (fileInput.current) fileInput.current.value = '';
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4 animate-pop-in">
-      <div className="w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-900 to-indigo-950 text-white">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold border border-indigo-500/40">
-              <QrCode className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-black leading-tight">Sync & Share Access</h2>
-              <p className="text-[10px] text-slate-300 font-medium">Multi-device real-time sync</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-end md:items-center justify-center md:p-4 animate-pop-in" role="dialog" aria-modal="true" aria-labelledby="backup-title">
+      <div className="w-full max-w-md bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl border border-slate-200 overflow-hidden max-h-[94dvh] flex flex-col">
+        <div className="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-slate-950 to-indigo-950 text-white"><div className="flex items-center gap-2.5"><div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center"><ArchiveRestore className="w-5 h-5" /></div><div><h2 id="backup-title" className="text-base font-extrabold">Offline Trip Backup</h2><p className="text-xs text-slate-300">Portable data, with your photos included</p></div></div><button onClick={onClose} aria-label="Close backup" className="w-11 h-11 -mr-2 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 cursor-pointer"><X className="w-5 h-5" /></button></div>
 
-        {/* Modal Body */}
-        <div className="p-5 space-y-4 overflow-y-auto no-scrollbar">
-          {/* QR Code Display */}
-          <div className="bg-slate-50 p-5 rounded-3xl border border-slate-200 flex flex-col items-center justify-center text-center space-y-3">
-            <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-md">
-              <QRCodeSVG value={shareUrl} size={150} level="M" />
-            </div>
-            <p className="text-xs font-extrabold text-slate-800">
-              Scan with friend&apos;s phone to join {trip.name}
-            </p>
-          </div>
+        <div className="p-5 space-y-4 overflow-y-auto">
+          <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4"><p className="text-sm font-extrabold text-indigo-950">Your trip is local-first</p><p className="text-sm text-indigo-800 mt-1 leading-relaxed">It works without internet and is stored on this device. Export a backup before changing phones or clearing app data.</p></div>
+          <button onClick={() => void exportBackup()} disabled={Boolean(busy)} className="w-full min-h-13 py-3 rounded-2xl bg-indigo-600 text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60">{busy === 'export' ? <LoaderCircle className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}Export {trip.name}</button>
+          <button onClick={() => fileInput.current?.click()} disabled={Boolean(busy)} className="w-full min-h-13 py-3 rounded-2xl border border-slate-300 text-slate-800 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60">{busy === 'import' ? <LoaderCircle className="w-5 h-5 animate-spin" /> : <FileUp className="w-5 h-5 text-indigo-600" />}Import a v2 Backup</button>
+          <input ref={fileInput} type="file" accept="application/json,.json" className="hidden" onChange={(event) => void importBackup(event.target.files?.[0])} />
 
-          {/* 6-Digit Room Code Card */}
-          <div className="bg-indigo-50/80 p-4 rounded-2xl border border-indigo-200 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] font-extrabold text-indigo-700 uppercase tracking-widest block">
-                1-Time Sync Code
-              </span>
-              <span className="text-lg font-black text-slate-900 tracking-wider">
-                {roomCode}
-              </span>
-            </div>
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2"><div className="flex items-center gap-2"><UserCheck className="w-5 h-5 text-purple-600" /><span className="text-sm font-bold text-slate-800">This device’s identity</span></div><p className="text-sm text-slate-600">Choose which trip member is adding expenses so the audit trail stays accurate.</p><button onClick={() => { onClose(); onOpenClaimIdentity(); }} className="w-full min-h-11 rounded-xl bg-purple-600 text-white font-extrabold text-sm cursor-pointer">Choose Participant Identity</button></div>
 
-            <button
-              onClick={handleCopyCode}
-              className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
-            >
-              {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copiedCode ? 'Copied!' : 'Copy Code'}
-            </button>
-          </div>
-
-          {/* Claim Identity Action Button */}
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
-            <div className="flex items-center gap-2">
-              <UserCheck className="w-4 h-4 text-purple-600" />
-              <span className="text-xs font-bold text-slate-800">Participant Identity</span>
-            </div>
-            <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-              If joining on a friend&apos;s phone, claim which participant profile you are so your actions are attributed in the audit trail.
-            </p>
-            <button
-              onClick={() => {
-                onClose();
-                onOpenClaimIdentity();
-              }}
-              className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-xs transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <UserCheck className="w-4 h-4" />
-              Claim My Participant Profile
-            </button>
-          </div>
-
-          {/* Security & Offline Guarantee */}
-          <div className="bg-slate-100/70 p-3 rounded-2xl border border-slate-200 flex items-start gap-2.5 text-[11px] text-slate-600">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-            <p className="font-medium">
-              Transparent Audit History logs every expense and payment with the member who performed it.
-            </p>
-          </div>
+          <div className="flex items-start gap-2.5 text-xs text-slate-600 bg-slate-100 rounded-xl p-3"><ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" /><p>There is no cloud account or hidden upload in v2. Multi-device live sync can be added later with a real backend.</p></div>
+          {message && <p role="status" className="text-sm font-semibold text-center text-slate-700">{message}</p>}
         </div>
       </div>
     </div>

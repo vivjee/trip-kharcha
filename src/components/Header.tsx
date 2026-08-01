@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Trip } from '@/types/trip';
 import { getTripDurationInDays, formatDateRange } from '@/lib/date-utils';
 import { getTripInitials } from '@/lib/trip-utils';
-import { ChevronDown, Plus, Check, CheckCircle2, Share2, Trash2, RefreshCw, QrCode, X, LayoutGrid } from 'lucide-react';
+import { ChevronDown, Plus, Check, CheckCircle2, Share2, Trash2, RefreshCw, ArchiveRestore, X, LayoutGrid } from 'lucide-react';
 
 interface HeaderProps {
   currentTrip: Trip;
@@ -148,13 +148,14 @@ export default function Header({
 
       {/* Right Controls: Sync, Share, Status Badge & Close Trip Button */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        {/* Sync & QR Code Button */}
+        {/* Offline backup button */}
         <button
           onClick={onOpenSyncModal}
           className="w-8 h-8 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 flex items-center justify-center transition-all active:scale-95 cursor-pointer border border-indigo-100"
-          title="Sync & Share Code / QR"
+          title="Offline Trip Backup"
+          aria-label="Offline Trip Backup"
         >
-          <QrCode className="w-4 h-4" />
+          <ArchiveRestore className="w-4 h-4" />
         </button>
 
         {/* Share Button */}
