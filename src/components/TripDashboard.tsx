@@ -6,6 +6,9 @@ import { Trip, SimplifiedDebt } from '@/types/trip';
 import { getTripStats, calculateParticipantBalances } from '@/lib/debt-simplification';
 import { getTripDurationInDays, formatDateRange } from '@/lib/date-utils';
 import { Plus, ArrowRightLeft, Users, CheckCircle, Sparkles, ArrowUpRight } from 'lucide-react';
+import StoredPhoto from '@/components/StoredPhoto';
+import PhotoPicker from '@/components/PhotoPicker';
+import Avatar from '@/components/Avatar';
 
 interface TripDashboardProps {
   trip: Trip;
@@ -14,6 +17,7 @@ interface TripDashboardProps {
   onOpenSettleUp: (debt?: SimplifiedDebt) => void;
   onNavigateTab: (tab: 'expenses' | 'balances') => void;
   onOpenAddParticipant: () => void;
+  onUpdateCover: (photoId: string | undefined, accentColor?: string) => void;
 }
 
 export default function TripDashboard({
@@ -23,6 +27,7 @@ export default function TripDashboard({
   onOpenSettleUp,
   onNavigateTab,
   onOpenAddParticipant,
+  onUpdateCover,
 }: TripDashboardProps) {
   const stats = getTripStats(trip);
   const balances = calculateParticipantBalances(trip);
@@ -67,18 +72,19 @@ export default function TripDashboard({
       <motion.div
         variants={itemVariants}
         className="relative overflow-hidden rounded-3xl luxury-hero-gradient p-5 text-white shadow-xl shadow-indigo-950/20 border border-white/20"
+        style={trip.accentColor ? { background: `linear-gradient(135deg, ${trip.accentColor}, #312e81)` } : undefined}
       >
-        <div className="flex items-center justify-between text-indigo-100 text-[10px] font-extrabold uppercase tracking-widest">
+        {trip.coverPhotoId && <StoredPhoto photoId={trip.coverPhotoId} alt={`${trip.name} cover`} priority className="opacity-55" />}
+        {trip.coverPhotoId && <div className="absolute inset-0 bg-gradient-to-br from-slate-950/75 via-indigo-950/55 to-purple-950/75" />}
+        <div className="relative z-10 flex items-center justify-between text-indigo-100 text-xs font-extrabold uppercase tracking-wider">
           <span className="flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
             {formatDateRange(trip)} ({durationDays}d)
           </span>
-          <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] text-white font-bold border border-white/20">
-            {stats.totalExpensesCount} Items
-          </span>
+          <span className="flex items-center gap-2"><span className="bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full text-xs text-white font-bold border border-white/20">{stats.totalExpensesCount} Items</span><PhotoPicker compact kind="cover" photoId={trip.coverPhotoId} label="trip cover" onChange={onUpdateCover} /></span>
         </div>
 
-        <div className="mt-2.5 flex items-baseline justify-between">
+        <div className="relative z-10 mt-2.5 flex items-baseline justify-between">
           <div className="flex items-baseline gap-1.5">
             <span className="text-3xl font-black tracking-tight text-white drop-shadow-sm">
               {trip.currencySymbol} {stats.totalSpent.toLocaleString()}
@@ -95,7 +101,7 @@ export default function TripDashboard({
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 mt-4 pt-3.5 border-t border-indigo-400/30">
+        <div className="relative z-10 grid grid-cols-2 gap-3 mt-4 pt-3.5 border-t border-indigo-400/30">
           <div className="bg-white/10 backdrop-blur-md p-2.5 rounded-2xl border border-white/10">
             <p className="text-[10px] text-indigo-200 font-extrabold uppercase tracking-wider">Average / Person</p>
             <p className="text-xs font-black text-white mt-0.5">
@@ -105,7 +111,7 @@ export default function TripDashboard({
           <div className="bg-white/10 backdrop-blur-md p-2.5 rounded-2xl border border-white/10">
             <p className="text-[10px] text-indigo-200 font-extrabold uppercase tracking-wider">Top Spender</p>
             <p className="text-xs font-black text-white flex items-center gap-1 truncate mt-0.5">
-              <span>{stats.topSpender?.avatar || '👤'}</span>
+              {stats.topSpender ? <Avatar person={{ name: stats.topSpender.participantName, avatar: stats.topSpender.avatar, photoId: stats.topSpender.photoId }} size="xs" /> : <span>👤</span>}
               <span className="truncate">{stats.topSpender?.participantName || 'N/A'}</span>
             </p>
           </div>
@@ -157,9 +163,7 @@ export default function TripDashboard({
               key={b.participantId}
               className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200/80 shadow-2xs"
             >
-              <span className="text-lg bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-2xs border border-slate-200">
-                {b.avatar}
-              </span>
+              <Avatar person={{ name: b.participantName, avatar: b.avatar, photoId: b.photoId }} size="sm" />
               <div>
                 <p className="text-xs font-black text-slate-900 leading-tight">{b.participantName}</p>
                 <p

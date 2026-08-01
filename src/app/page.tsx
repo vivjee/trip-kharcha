@@ -5,6 +5,7 @@ import { Trip, Expense, Settlement, SimplifiedDebt, Participant, UserProfile } f
 import { calculateSimplifiedDebts } from '@/lib/debt-simplification';
 import { loadTripsFromStorage, saveTripsToStorage, loadUserProfileFromStorage, saveUserProfileToStorage } from '@/lib/storage';
 import { appendAuditLog, createAuditEntry } from '@/lib/audit';
+import { deleteStoredPhoto } from '@/lib/image-storage';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -315,6 +316,7 @@ export default function Home() {
   const handleDeleteTrip = (tripId: string) => {
     const targetTrip = trips.find((t) => t.id === tripId);
     if (confirm(`Are you sure you want to delete "${targetTrip?.name || 'this trip'}"?`)) {
+      if (targetTrip?.coverPhotoId) void deleteStoredPhoto(targetTrip.coverPhotoId);
       const remainingTrips = trips.filter((t) => t.id !== tripId);
       setTrips(remainingTrips);
 
@@ -334,6 +336,9 @@ export default function Home() {
 
   const handleResetDemoData = () => {
     if (confirm('Clear all trip data and reset to a clean slate?')) {
+      trips.forEach((trip) => {
+        if (trip.coverPhotoId) void deleteStoredPhoto(trip.coverPhotoId);
+      });
       setTrips([]);
       setActiveTripId('');
       setIdentityByTripId({});
@@ -350,6 +355,22 @@ export default function Home() {
     setSettlementToEdit(undefined);
     setPresetDebt(targetDebt);
     setIsSettleUpOpen(true);
+  };
+
+  const handleUpdateCover = (photoId: string | undefined, accentColor?: string) => {
+    if (!currentTrip) return;
+    if (currentTrip.coverPhotoId && currentTrip.coverPhotoId !== photoId) {
+      void deleteStoredPhoto(currentTrip.coverPhotoId);
+    }
+    const actor = currentTrip.participants.find((participant) => participant.id === currentParticipantId);
+    const updatedTrip = appendAuditLog(
+      { ...currentTrip, coverPhotoId: photoId, accentColor: photoId ? accentColor || currentTrip.accentColor : undefined },
+      'UPDATE_COVER',
+      photoId ? 'Updated the trip cover photo' : 'Removed the trip cover photo',
+      actor,
+    );
+    setTrips(trips.map((trip) => trip.id === currentTrip.id ? updatedTrip : trip));
+    showToast(photoId ? 'Trip cover updated' : 'Trip cover removed');
   };
 
   // Case 1: Zero Trips Exist
@@ -449,6 +470,7 @@ export default function Home() {
                 onOpenSettleUp={(debt) => handleOpenSettleUpWithDebt(debt)}
                 onOpenAddParticipant={() => setIsAddParticipantOpen(true)}
                 onNavigateTab={(tab) => setActiveTab(tab)}
+                onUpdateCover={handleUpdateCover}
               />
             </motion.div>
           )}

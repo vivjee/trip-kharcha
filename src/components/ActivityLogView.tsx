@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trip, AuditLogEntry } from '@/types/trip';
 import { History, PlusCircle, Trash2, CheckCircle2, UserCheck, Sparkles, Filter } from 'lucide-react';
+import Avatar from '@/components/Avatar';
 
 interface ActivityLogViewProps {
   trip: Trip;
@@ -23,10 +24,14 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
     switch (actionType) {
       case 'ADD_EXPENSE':
         return { label: 'Added Expense', bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: PlusCircle };
+      case 'EDIT_EXPENSE':
+        return { label: 'Edited Expense', bg: 'bg-blue-50 text-blue-700 border-blue-200', icon: PlusCircle };
       case 'DELETE_EXPENSE':
         return { label: 'Deleted Expense', bg: 'bg-rose-50 text-rose-700 border-rose-200', icon: Trash2 };
       case 'RECORD_SETTLEMENT':
         return { label: 'Settlement', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 };
+      case 'EDIT_SETTLEMENT':
+        return { label: 'Edited Payment', bg: 'bg-teal-50 text-teal-700 border-teal-200', icon: CheckCircle2 };
       case 'DELETE_SETTLEMENT':
         return { label: 'Deleted Settlement', bg: 'bg-amber-50 text-amber-700 border-amber-200', icon: Trash2 };
       case 'CLAIM_IDENTITY':
@@ -103,9 +108,7 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-sm shadow-2xs">
-                      {log.performedBy.avatar}
-                    </span>
+                    <Avatar person={log.performedBy} size="xs" />
                     <div>
                       <span className="text-xs font-black text-slate-900">{log.performedBy.name}</span>
                       <span className="text-[10px] text-slate-400 ml-1.5 font-semibold">

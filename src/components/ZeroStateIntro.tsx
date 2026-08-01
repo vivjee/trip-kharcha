@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { UserProfile } from '@/types/trip';
 import { Plus, Sparkles, User, UserCheck, CheckCircle2 } from 'lucide-react';
+import Avatar from '@/components/Avatar';
 
 interface ZeroStateIntroProps {
   userProfile: UserProfile | null;
@@ -57,7 +58,7 @@ export default function ZeroStateIntro({
             onClick={onOpenCreateProfile}
             className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-white text-[10px] font-bold border border-white/20 hover:bg-white/20 transition-all cursor-pointer"
           >
-            <span>{userProfile.avatar}</span>
+            <Avatar person={userProfile} size="xs" />
             <span>{userProfile.name}</span>
           </button>
         ) : (

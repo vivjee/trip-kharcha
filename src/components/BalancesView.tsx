@@ -5,6 +5,7 @@ import { Settlement, Trip, SimplifiedDebt } from '@/types/trip';
 import { calculateParticipantBalances, getSettlementProgress } from '@/lib/debt-simplification';
 import { ArrowRight, CheckCircle2, Sparkles, Trophy, Pencil, Trash2, History } from 'lucide-react';
 import { formatSingleDate } from '@/lib/date-utils';
+import Avatar from '@/components/Avatar';
 
 interface BalancesViewProps {
   trip: Trip;
@@ -127,12 +128,12 @@ export default function BalancesView({
               >
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                    <span className="bg-white px-2 py-1 rounded-xl shadow-2xs">
-                      {debt.from.avatar} {debt.from.name}
+                    <span className="bg-white px-2 py-1 rounded-xl shadow-2xs flex items-center gap-1.5">
+                      <Avatar person={debt.from} size="xs" /> {debt.from.name}
                     </span>
                     <ArrowRight className="w-3.5 h-3.5 text-indigo-500" />
-                    <span className="bg-white px-2 py-1 rounded-xl shadow-2xs">
-                      {debt.to.avatar} {debt.to.name}
+                    <span className="bg-white px-2 py-1 rounded-xl shadow-2xs flex items-center gap-1.5">
+                      <Avatar person={debt.to} size="xs" /> {debt.to.name}
                     </span>
                   </div>
                 </div>
@@ -174,7 +175,7 @@ export default function BalancesView({
                 className="flex items-center justify-between p-3 rounded-2xl border border-slate-100 bg-slate-50/50"
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="text-xl">{b.avatar}</span>
+                  <Avatar person={{ name: b.participantName, avatar: b.avatar, photoId: b.photoId }} size="sm" />
                   <div>
                     <p className="text-xs font-bold text-slate-900">{b.participantName}</p>
                     <p className="text-[10px] text-slate-400">

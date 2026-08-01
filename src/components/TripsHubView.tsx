@@ -6,6 +6,8 @@ import { getTripInitials } from '@/lib/trip-utils';
 import { getTripDurationInDays, formatDateRange } from '@/lib/date-utils';
 import { Plus, MapPin, Sparkles, User, Calendar, Users, ArrowRight, Trash2, CheckCircle2, ChevronRight, Compass } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Avatar from '@/components/Avatar';
+import StoredPhoto from '@/components/StoredPhoto';
 
 interface TripsHubViewProps {
   trips: Trip[];
@@ -70,7 +72,7 @@ export default function TripsHubView({
             onClick={onOpenCreateProfile}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-all cursor-pointer shadow-sm active:scale-95"
           >
-            <span className="text-sm">{userProfile.avatar}</span>
+            <Avatar person={userProfile} size="xs" />
             <span>{userProfile.name}</span>
           </button>
         ) : (
@@ -168,8 +170,9 @@ export default function TripsHubView({
                   <div className="flex items-start justify-between gap-3">
                     {/* Left: Initial Avatar Badge + Info */}
                     <div className="flex items-start gap-3 min-w-0 flex-1">
-                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 text-white font-black text-base flex items-center justify-center shadow-md border border-white/20 flex-shrink-0">
-                        {getTripInitials(t.name)}
+                      <div className="relative overflow-hidden w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 text-white font-black text-base flex items-center justify-center shadow-md border border-white/20 flex-shrink-0">
+                        {t.coverPhotoId && <StoredPhoto photoId={t.coverPhotoId} alt={`${t.name} cover`} />}
+                        <span className={t.coverPhotoId ? 'opacity-0' : ''}>{getTripInitials(t.name)}</span>
                       </div>
 
                       <div className="min-w-0 flex-1 space-y-1">
@@ -210,7 +213,7 @@ export default function TripsHubView({
                                   className="inline-block w-6 h-6 rounded-full bg-slate-700 border border-slate-600 text-center text-xs leading-5 shadow-2xs"
                                   title={p.name}
                                 >
-                                  {p.avatar}
+                                  <Avatar person={p} size="xs" />
                                 </span>
                               ))}
                             </div>
