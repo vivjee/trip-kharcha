@@ -153,7 +153,7 @@ export default function TripDashboard({
             onClick={onOpenAddParticipant}
             className="text-[11px] font-extrabold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-xl transition-all cursor-pointer border border-indigo-100 flex items-center gap-1"
           >
-            <Plus className="w-3 h-3 stroke-[3]" /> Add Member
+            <Users className="w-3 h-3 stroke-[2.5]" /> Manage
           </motion.button>
         </div>
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">

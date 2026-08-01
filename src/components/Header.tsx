@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Trip } from '@/types/trip';
 import { getTripDurationInDays, formatDateRange } from '@/lib/date-utils';
 import { getTripInitials } from '@/lib/trip-utils';
-import { ChevronDown, Plus, Check, CheckCircle2, Share2, Trash2, RefreshCw, ArchiveRestore, LayoutGrid } from 'lucide-react';
+import { ChevronDown, Plus, Check, CheckCircle2, Share2, Trash2, RefreshCw, ArchiveRestore, LayoutGrid, PencilLine } from 'lucide-react';
 
 interface HeaderProps {
   currentTrip: Trip;
@@ -12,6 +12,7 @@ interface HeaderProps {
   onSelectTrip: (tripId: string) => void;
   onCloseTrip: () => void;
   onOpenNewTripModal: () => void;
+  onOpenEditTripModal: () => void;
   onToggleTripStatus: () => void;
   onOpenShareModal: () => void;
   onOpenSyncModal: () => void;
@@ -25,6 +26,7 @@ export default function Header({
   onSelectTrip,
   onCloseTrip,
   onOpenNewTripModal,
+  onOpenEditTripModal,
   onToggleTripStatus,
   onOpenShareModal,
   onOpenSyncModal,
@@ -72,6 +74,17 @@ export default function Header({
             >
               <LayoutGrid className="w-4 h-4 text-indigo-600" />
               <span>← All Trips Hub</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setIsDropdownOpen(false);
+                onOpenEditTripModal();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 text-xs font-bold transition-all cursor-pointer mb-1"
+            >
+              <PencilLine className="w-4 h-4 text-indigo-600" />
+              <span>Edit Trip Details</span>
             </button>
 
             <div className="text-[10px] font-extrabold text-slate-400 px-3 py-1 uppercase tracking-wider">

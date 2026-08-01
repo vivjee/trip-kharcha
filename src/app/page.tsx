@@ -23,6 +23,7 @@ import TripsHubView from '@/components/TripsHubView';
 import AddExpenseModal from '@/components/AddExpenseModal';
 import SettleUpModal from '@/components/SettleUpModal';
 import TripModal from '@/components/TripModal';
+import EditTripModal, { type TripDetailsUpdate } from '@/components/EditTripModal';
 import ShareSummaryModal from '@/components/ShareSummaryModal';
 import CompleteTripModal from '@/components/CompleteTripModal';
 import AddParticipantModal from '@/components/AddParticipantModal';
@@ -54,6 +55,7 @@ export default function Home() {
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isSettleUpOpen, setIsSettleUpOpen] = useState(false);
   const [isTripModalOpen, setIsTripModalOpen] = useState(false);
+  const [isEditTripOpen, setIsEditTripOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isCompleteTripOpen, setIsCompleteTripOpen] = useState(false);
   const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false);
@@ -284,6 +286,62 @@ export default function Home() {
     showToast(`Added ${newParticipant.name} to trip`);
   };
 
+  const handleUpdateParticipant = (participantId: string, name: string) => {
+    if (!currentTrip) return;
+    const participant = currentTrip.participants.find((item) => item.id === participantId);
+    if (!participant || participant.name === name) return;
+
+    const actor = currentTrip.participants.find((item) => item.id === currentParticipantId);
+    const updatedTrip = appendAuditLog({
+      ...currentTrip,
+      participants: currentTrip.participants.map((item) => (
+        item.id === participantId ? { ...item, name } : item
+      )),
+    }, 'UPDATE_PARTICIPANT', `Renamed ${participant.name} to ${name}`, actor);
+
+    setTrips(trips.map((trip) => trip.id === currentTrip.id ? updatedTrip : trip));
+    showToast(`Updated ${name}`);
+  };
+
+  const handleRemoveParticipant = (participantId: string) => {
+    if (!currentTrip) return;
+    const participant = currentTrip.participants.find((item) => item.id === participantId);
+    if (!participant) return;
+
+    const isUsed = currentTrip.expenses.some((expense) => (
+      expense.paidById === participantId
+      || expense.payers?.some((payer) => payer.participantId === participantId)
+      || expense.includedParticipantIds.includes(participantId)
+      || expense.shares?.some((share) => share.participantId === participantId)
+    )) || currentTrip.settlements.some((settlement) => (
+      settlement.fromParticipantId === participantId
+      || settlement.toParticipantId === participantId
+    ));
+
+    if (participantId === currentParticipantId || isUsed || currentTrip.participants.length <= 1) {
+      showToast('This member cannot be removed while they are part of trip records');
+      return;
+    }
+
+    const actor = currentTrip.participants.find((item) => item.id === currentParticipantId);
+    const updatedTrip = appendAuditLog({
+      ...currentTrip,
+      participants: currentTrip.participants.filter((item) => item.id !== participantId),
+    }, 'REMOVE_PARTICIPANT', `Removed ${participant.name} from the trip`, actor);
+
+    setTrips(trips.map((trip) => trip.id === currentTrip.id ? updatedTrip : trip));
+    showToast(`Removed ${participant.name}`);
+  };
+
+  const handleUpdateTripDetails = (updates: TripDetailsUpdate) => {
+    if (!currentTrip) return;
+    const actor = currentTrip.participants.find((participant) => participant.id === currentParticipantId);
+    const updatedTrip = appendAuditLog({ ...currentTrip, ...updates }, 'UPDATE_TRIP', `Updated trip details for “${updates.name}”`, actor);
+    setTrips(trips.map((trip) => trip.id === currentTrip.id ? updatedTrip : trip));
+    setIsEditTripOpen(false);
+    showToast('Trip details updated');
+  };
+
   const handleDeleteExpense = (expenseId: string) => {
     if (!currentTrip) return;
 
@@ -459,6 +517,7 @@ export default function Home() {
         onSelectTrip={handleSelectTrip}
         onCloseTrip={handleCloseTrip}
         onOpenNewTripModal={() => setIsTripModalOpen(true)}
+        onOpenEditTripModal={() => setIsEditTripOpen(true)}
         onToggleTripStatus={handleToggleTripStatus}
         onOpenShareModal={() => setIsShareModalOpen(true)}
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
@@ -603,6 +662,15 @@ export default function Home() {
         onCreateTrip={handleCreateTrip}
       />
 
+      {isEditTripOpen && (
+        <EditTripModal
+          trip={currentTrip}
+          isOpen
+          onClose={() => setIsEditTripOpen(false)}
+          onSave={handleUpdateTripDetails}
+        />
+      )}
+
       <CreateProfileModal
         isOpen={isCreateProfileOpen}
         onClose={() => setIsCreateProfileOpen(false)}
@@ -625,12 +693,17 @@ export default function Home() {
         onConfirmComplete={handleConfirmCompleteTrip}
       />
 
-      <AddParticipantModal
-        trip={currentTrip}
-        isOpen={isAddParticipantOpen}
-        onClose={() => setIsAddParticipantOpen(false)}
-        onAddParticipant={handleAddParticipant}
-      />
+      {isAddParticipantOpen && (
+        <AddParticipantModal
+          trip={currentTrip}
+          currentParticipantId={currentParticipantId}
+          isOpen
+          onClose={() => setIsAddParticipantOpen(false)}
+          onAddParticipant={handleAddParticipant}
+          onUpdateParticipant={handleUpdateParticipant}
+          onRemoveParticipant={handleRemoveParticipant}
+        />
+      )}
 
       <SyncTripModal
         trip={currentTrip}

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trip, AuditLogEntry } from '@/types/trip';
-import { History, PlusCircle, Trash2, CheckCircle2, UserCheck, Sparkles, Filter } from 'lucide-react';
+import { History, PlusCircle, Trash2, CheckCircle2, UserCheck, Sparkles, Filter, PencilLine, UserMinus, UserPlus } from 'lucide-react';
 import Avatar from '@/components/Avatar';
 
 interface ActivityLogViewProps {
@@ -36,6 +36,14 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
         return { label: 'Deleted Settlement', bg: 'bg-amber-50 text-amber-700 border-amber-200', icon: Trash2 };
       case 'CLAIM_IDENTITY':
         return { label: 'Joined / Claimed', bg: 'bg-purple-50 text-purple-700 border-purple-200', icon: UserCheck };
+      case 'ADD_PARTICIPANT':
+        return { label: 'Added Member', bg: 'bg-violet-50 text-violet-700 border-violet-200', icon: UserPlus };
+      case 'UPDATE_PARTICIPANT':
+        return { label: 'Renamed Member', bg: 'bg-blue-50 text-blue-700 border-blue-200', icon: PencilLine };
+      case 'REMOVE_PARTICIPANT':
+        return { label: 'Removed Member', bg: 'bg-rose-50 text-rose-700 border-rose-200', icon: UserMinus };
+      case 'UPDATE_TRIP':
+        return { label: 'Edited Trip', bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: PencilLine };
       default:
         return { label: 'Trip Action', bg: 'bg-slate-100 text-slate-700 border-slate-200', icon: History };
     }
