@@ -3,18 +3,27 @@ export interface UserProfile {
   name: string;
   gender: 'male' | 'female';
   avatar: string;
+  photoId?: string;
 }
 
 export interface Participant {
   id: string;
+  profileId?: string;
   name: string;
-  avatar: string; // Emoji avatar or avatar color
-  color: string; // Tailwind color or hex
+  avatar: string;
+  photoId?: string;
+  color: string;
 }
 
 export type CategoryType = 'food' | 'transport' | 'stay' | 'activity' | 'shopping' | 'other';
+export type SplitMode = 'equal' | 'exact' | 'percentage';
 
 export interface ExpensePayer {
+  participantId: string;
+  amount: number;
+}
+
+export interface ExpenseShare {
   participantId: string;
   amount: number;
 }
@@ -22,25 +31,46 @@ export interface ExpensePayer {
 export interface Expense {
   id: string;
   title: string;
-  amount: number; // in NPR
-  paidById: string; // Participant ID (for single-payer or main payer)
-  payers?: ExpensePayer[]; // Optional multi-payer list
-  includedParticipantIds: string[]; // Opt-in participant IDs
+  amount: number;
+  paidById: string;
+  payers?: ExpensePayer[];
+  includedParticipantIds: string[];
+  splitMode?: SplitMode;
+  shares?: ExpenseShare[];
   category: CategoryType;
-  date: string; // ISO string or human date
+  date: string;
   notes?: string;
-  createdByParticipantId?: string; // Audit attribution
+  createdAt?: string;
+  updatedAt?: string;
+  createdByParticipantId?: string;
 }
 
 export interface Settlement {
   id: string;
   fromParticipantId: string;
   toParticipantId: string;
-  amount: number; // in NPR
+  amount: number;
   date: string;
   notes?: string;
-  createdByParticipantId?: string; // Audit attribution
+  createdAt?: string;
+  updatedAt?: string;
+  createdByParticipantId?: string;
 }
+
+export type AuditActionType =
+  | 'ADD_EXPENSE'
+  | 'EDIT_EXPENSE'
+  | 'DELETE_EXPENSE'
+  | 'RECORD_SETTLEMENT'
+  | 'EDIT_SETTLEMENT'
+  | 'DELETE_SETTLEMENT'
+  | 'ADD_PARTICIPANT'
+  | 'CLAIM_IDENTITY'
+  | 'CREATE_TRIP'
+  | 'COMPLETE_TRIP'
+  | 'REOPEN_TRIP'
+  | 'UPDATE_COVER'
+  | 'IMPORT_TRIP';
 
 export interface AuditLogEntry {
   id: string;
@@ -49,8 +79,9 @@ export interface AuditLogEntry {
     id: string;
     name: string;
     avatar: string;
+    photoId?: string;
   };
-  actionType: 'ADD_EXPENSE' | 'DELETE_EXPENSE' | 'RECORD_SETTLEMENT' | 'DELETE_SETTLEMENT' | 'CLAIM_IDENTITY' | 'CREATE_TRIP' | 'COMPLETE_TRIP' | 'JOIN_TRIP';
+  actionType: AuditActionType;
   details: string;
 }
 
@@ -59,27 +90,33 @@ export interface Trip {
   name: string;
   description: string;
   coverImageEmoji: string;
-  currency: string; // Default 'NPR'
-  currencySymbol: string; // Default 'रू'
+  coverPhotoId?: string;
+  accentColor?: string;
+  currency: string;
+  currencySymbol: string;
   participants: Participant[];
   expenses: Expense[];
   settlements: Settlement[];
   status: 'active' | 'completed';
-  startDate: string; // ISO date string 'YYYY-MM-DD'
-  endDate?: string; // ISO date string 'YYYY-MM-DD' when completed
+  startDate: string;
+  endDate?: string;
   createdAt: string;
-  roomCode?: string; // 6-digit sync code e.g. "NEPAL-7821"
-  auditLogs?: AuditLogEntry[]; // History of who did what
+  updatedAt?: string;
+  roomCode?: string;
+  auditLogs?: AuditLogEntry[];
 }
 
 export interface ParticipantBalance {
   participantId: string;
   participantName: string;
   avatar: string;
+  photoId?: string;
   color: string;
   totalPaid: number;
   totalOwed: number;
-  netBalance: number; // Positive = should receive money, Negative = owes money
+  settlementPaid: number;
+  settlementReceived: number;
+  netBalance: number;
 }
 
 export interface SimplifiedDebt {

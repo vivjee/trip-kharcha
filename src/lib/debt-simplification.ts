@@ -1,160 +1,148 @@
-import { Trip, ParticipantBalance, SimplifiedDebt } from '@/types/trip';
+import { Expense, ParticipantBalance, SimplifiedDebt, Trip } from '@/types/trip';
 
-/**
- * Calculates individual balances for all participants in a trip
- */
-export function calculateParticipantBalances(trip?: Trip): ParticipantBalance[] {
-  if (!trip || !trip.participants || !Array.isArray(trip.participants)) {
-    return [];
+const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+export function getExpenseShares(expense: Expense): { participantId: string; amount: number }[] {
+  const savedShares = (expense.shares || []).filter((share) => share.amount > 0);
+  const savedTotal = savedShares.reduce((sum, share) => sum + share.amount, 0);
+  if (savedShares.length > 0 && Math.abs(savedTotal - expense.amount) < 0.02) {
+    return savedShares.map((share) => ({ ...share, amount: roundMoney(share.amount) }));
   }
 
-  const balanceMap: Record<
-    string,
-    { totalPaid: number; totalOwed: number }
-  > = {};
+  const included = expense.includedParticipantIds || [];
+  if (included.length === 0) return [];
+  const baseShare = Math.floor((expense.amount * 100) / included.length) / 100;
+  let assigned = 0;
+  return included.map((participantId, index) => {
+    const amount = index === included.length - 1 ? roundMoney(expense.amount - assigned) : baseShare;
+    assigned = roundMoney(assigned + amount);
+    return { participantId, amount };
+  });
+}
 
-  // Initialize map for all participants
-  trip.participants.forEach((p) => {
-    balanceMap[p.id] = { totalPaid: 0, totalOwed: 0 };
+export function calculateParticipantBalances(trip?: Trip): ParticipantBalance[] {
+  if (!trip?.participants || !Array.isArray(trip.participants)) return [];
+
+  const balanceMap: Record<string, {
+    totalPaid: number;
+    totalOwed: number;
+    settlementPaid: number;
+    settlementReceived: number;
+  }> = {};
+
+  trip.participants.forEach((participant) => {
+    balanceMap[participant.id] = {
+      totalPaid: 0,
+      totalOwed: 0,
+      settlementPaid: 0,
+      settlementReceived: 0,
+    };
   });
 
-  // Calculate from expenses
   trip.expenses.forEach((expense) => {
-    // Payers get credit for paid amounts
-    if (expense.payers && expense.payers.length > 0) {
-      expense.payers.forEach((payer) => {
-        if (balanceMap[payer.participantId]) {
-          balanceMap[payer.participantId].totalPaid += payer.amount;
-        }
-      });
-    } else if (balanceMap[expense.paidById]) {
-      balanceMap[expense.paidById].totalPaid += expense.amount;
-    }
+    const payers = expense.payers?.length
+      ? expense.payers
+      : [{ participantId: expense.paidById, amount: expense.amount }];
+    payers.forEach((payer) => {
+      if (balanceMap[payer.participantId] && payer.amount > 0) {
+        balanceMap[payer.participantId].totalPaid += payer.amount;
+      }
+    });
 
-    // Split equally among included participants
-    if (expense.includedParticipantIds && expense.includedParticipantIds.length > 0) {
-      const perPersonShare = expense.amount / expense.includedParticipantIds.length;
-      expense.includedParticipantIds.forEach((id) => {
-        if (balanceMap[id]) {
-          balanceMap[id].totalOwed += perPersonShare;
-        }
-      });
-    }
+    getExpenseShares(expense).forEach((share) => {
+      if (balanceMap[share.participantId]) {
+        balanceMap[share.participantId].totalOwed += share.amount;
+      }
+    });
   });
 
-  // Factor in recorded settlements (repayments)
   trip.settlements.forEach((settlement) => {
     if (balanceMap[settlement.fromParticipantId]) {
-      balanceMap[settlement.fromParticipantId].totalPaid += settlement.amount;
+      balanceMap[settlement.fromParticipantId].settlementPaid += settlement.amount;
     }
     if (balanceMap[settlement.toParticipantId]) {
-      balanceMap[settlement.toParticipantId].totalOwed += settlement.amount;
+      balanceMap[settlement.toParticipantId].settlementReceived += settlement.amount;
     }
   });
 
-  // Map to final array
-  return trip.participants.map((p) => {
-    const data = balanceMap[p.id] || { totalPaid: 0, totalOwed: 0 };
-    const netBalance = data.totalPaid - data.totalOwed;
+  return trip.participants.map((participant) => {
+    const data = balanceMap[participant.id];
+    const netBalance = data.totalPaid - data.totalOwed + data.settlementPaid - data.settlementReceived;
     return {
-      participantId: p.id,
-      participantName: p.name,
-      avatar: p.avatar,
-      color: p.color,
-      totalPaid: Math.round(data.totalPaid * 100) / 100,
-      totalOwed: Math.round(data.totalOwed * 100) / 100,
-      netBalance: Math.round(netBalance * 100) / 100,
+      participantId: participant.id,
+      participantName: participant.name,
+      avatar: participant.avatar,
+      photoId: participant.photoId,
+      color: participant.color,
+      totalPaid: roundMoney(data.totalPaid),
+      totalOwed: roundMoney(data.totalOwed),
+      settlementPaid: roundMoney(data.settlementPaid),
+      settlementReceived: roundMoney(data.settlementReceived),
+      netBalance: roundMoney(netBalance),
     };
   });
 }
 
-/**
- * Minimum Cash Flow Algorithm to simplify debt transactions to the fewest possible payments.
- */
 export function calculateSimplifiedDebts(trip?: Trip): SimplifiedDebt[] {
-  if (!trip || !trip.participants || !Array.isArray(trip.participants)) {
-    return [];
-  }
-
+  if (!trip?.participants || !Array.isArray(trip.participants)) return [];
   const balances = calculateParticipantBalances(trip);
-  const participantMap = new Map(trip.participants.map((p) => [p.id, p]));
-
-  // Debtors have negative net balance (they owe money)
-  const debtors: { id: string; amount: number }[] = [];
-  // Creditors have positive net balance (they should receive money)
-  const creditors: { id: string; amount: number }[] = [];
-
-  balances.forEach((b) => {
-    if (b.netBalance < -0.01) {
-      debtors.push({ id: b.participantId, amount: Math.abs(b.netBalance) });
-    } else if (b.netBalance > 0.01) {
-      creditors.push({ id: b.participantId, amount: b.netBalance });
-    }
-  });
-
-  // Sort descending by amount to maximize greedy matching
-  debtors.sort((a, b) => b.amount - a.amount);
-  creditors.sort((a, b) => b.amount - a.amount);
+  const participantMap = new Map(trip.participants.map((participant) => [participant.id, participant]));
+  const debtors = balances
+    .filter((balance) => balance.netBalance < -0.01)
+    .map((balance) => ({ id: balance.participantId, amount: Math.abs(balance.netBalance) }))
+    .sort((a, b) => b.amount - a.amount);
+  const creditors = balances
+    .filter((balance) => balance.netBalance > 0.01)
+    .map((balance) => ({ id: balance.participantId, amount: balance.netBalance }))
+    .sort((a, b) => b.amount - a.amount);
 
   const transactions: SimplifiedDebt[] = [];
-  let dIdx = 0;
-  let cIdx = 0;
-
-  while (dIdx < debtors.length && cIdx < creditors.length) {
-    const debtor = debtors[dIdx];
-    const creditor = creditors[cIdx];
-
+  let debtorIndex = 0;
+  let creditorIndex = 0;
+  while (debtorIndex < debtors.length && creditorIndex < creditors.length) {
+    const debtor = debtors[debtorIndex];
+    const creditor = creditors[creditorIndex];
     const amount = Math.min(debtor.amount, creditor.amount);
-    const roundedAmount = Math.round(amount * 100) / 100;
-
-    if (roundedAmount > 0) {
-      const fromPart = participantMap.get(debtor.id);
-      const toPart = participantMap.get(creditor.id);
-
-      if (fromPart && toPart) {
-        transactions.push({
-          id: `debt-${debtor.id}-${creditor.id}-${transactions.length}`,
-          from: fromPart,
-          to: toPart,
-          amount: roundedAmount,
-        });
-      }
+    const from = participantMap.get(debtor.id);
+    const to = participantMap.get(creditor.id);
+    if (from && to && amount > 0.009) {
+      transactions.push({
+        id: `debt-${debtor.id}-${creditor.id}-${transactions.length}`,
+        from,
+        to,
+        amount: roundMoney(amount),
+      });
     }
-
     debtor.amount -= amount;
     creditor.amount -= amount;
-
-    if (debtor.amount < 0.01) dIdx++;
-    if (creditor.amount < 0.01) cIdx++;
+    if (debtor.amount < 0.01) debtorIndex += 1;
+    if (creditor.amount < 0.01) creditorIndex += 1;
   }
-
   return transactions;
 }
 
-/**
- * Calculates trip overall summary statistics
- */
-export function getTripStats(trip: Trip) {
-  const totalSpent = trip.expenses.reduce((sum, e) => sum + e.amount, 0);
-  const totalExpensesCount = trip.expenses.length;
-  const balances = calculateParticipantBalances(trip);
-  
-  // Find top spender
-  let topSpender = balances.length > 0 ? balances[0] : null;
-  balances.forEach((b) => {
-    if (topSpender && b.totalPaid > topSpender.totalPaid) {
-      topSpender = b;
-    }
-  });
-
-  const perPersonAvg = trip.participants.length > 0 
-    ? totalSpent / trip.participants.length 
-    : 0;
-
+export function getSettlementProgress(trip: Trip, debts = calculateSimplifiedDebts(trip)) {
+  const recorded = roundMoney(trip.settlements.reduce((sum, settlement) => sum + settlement.amount, 0));
+  const pending = roundMoney(debts.reduce((sum, debt) => sum + debt.amount, 0));
+  const total = recorded + pending;
   return {
-    totalSpent: Math.round(totalSpent * 100) / 100,
-    totalExpensesCount,
+    recorded,
+    pending,
+    percentage: total > 0 ? Math.round((recorded / total) * 100) : 100,
+  };
+}
+
+export function getTripStats(trip: Trip) {
+  const totalSpent = roundMoney(trip.expenses.reduce((sum, expense) => sum + expense.amount, 0));
+  const balances = calculateParticipantBalances(trip);
+  const topSpender = balances.reduce<ParticipantBalance | null>((top, balance) => {
+    if (!top || balance.totalPaid > top.totalPaid) return balance;
+    return top;
+  }, null);
+  return {
+    totalSpent,
+    totalExpensesCount: trip.expenses.length,
     topSpender,
-    perPersonAvg: Math.round(perPersonAvg * 100) / 100,
+    perPersonAvg: trip.participants.length ? roundMoney(totalSpent / trip.participants.length) : 0,
   };
 }

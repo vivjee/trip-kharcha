@@ -1,50 +1,56 @@
 import { Trip } from '@/types/trip';
 
-/**
- * Calculates total trip duration in days
- */
-export function getTripDurationInDays(trip: Trip): number {
-  const start = trip.startDate ? new Date(trip.startDate) : new Date(trip.createdAt);
-  const end = trip.endDate 
-    ? new Date(trip.endDate) 
-    : new Date(); // If active, use current date
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-  const diffTime = Math.max(0, end.getTime() - start.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  return Math.max(1, diffDays === 0 ? 1 : diffDays + 1); // Inclusive day count
+export function getTodayLocalDate(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
-/**
- * Formats date range string (e.g. "Jul 28 – Jul 31, 2026" or "Jul 28, 2026")
- */
-export function formatDateRange(trip: Trip): string {
-  const start = trip.startDate ? new Date(trip.startDate) : new Date(trip.createdAt);
-  const end = trip.endDate ? new Date(trip.endDate) : new Date();
+export function parseLocalDate(dateString?: string): Date {
+  if (!dateString) return new Date();
+  const dateOnly = dateString.slice(0, 10);
+  const [year, month, day] = dateOnly.split('-').map(Number);
+  if (year && month && day) return new Date(year, month - 1, day, 12);
+  return new Date(dateString);
+}
 
+export function getTripDurationInDays(trip: Trip): number {
+  const start = parseLocalDate(trip.startDate || trip.createdAt);
+  const end = parseLocalDate(trip.status === 'completed' && trip.endDate ? trip.endDate : getTodayLocalDate());
+  const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+  const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+  return Math.max(1, Math.floor((endDay - startDay) / DAY_MS) + 1);
+}
+
+export function formatDateRange(trip: Trip): string {
+  const start = parseLocalDate(trip.startDate || trip.createdAt);
   const startStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  
+
   if (trip.status === 'completed' && trip.endDate) {
+    const end = parseLocalDate(trip.endDate);
     const endStr = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     return `${startStr} – ${endStr}`;
   }
 
-  const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  if (startStr === todayStr.split(',')[0]) {
-    return `Started Today (${todayStr})`;
+  if (trip.startDate === getTodayLocalDate()) {
+    return `Started Today (${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})`;
   }
 
   return `Started ${startStr}`;
 }
 
-/**
- * Formats a single date string
- */
-export function formatSingleDate(dateStr: string): string {
+export function formatSingleDate(dateString: string): string {
   try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return parseLocalDate(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   } catch {
-    return dateStr;
+    return dateString;
   }
 }

@@ -1,77 +1,101 @@
 import { Trip, UserProfile } from '@/types/trip';
 
 const LOCAL_STORAGE_KEY = 'trip_calculator_data_v4_clean_slate';
+const LEGACY_STORAGE_KEYS = ['trip_calculator_data_v3', 'trip_calculator_data_v2', 'trip_calculator_data_v1'];
 const USER_PROFILE_STORAGE_KEY = 'user_profile_data_v1';
+const DATA_VERSION = 2;
+
+export interface StoredTripData {
+  version: number;
+  trips: Trip[];
+  activeTripId: string;
+  identityByTripId: Record<string, string>;
+}
+
+function migrateTrip(trip: Trip): Trip {
+  const createdAt = trip.createdAt || new Date().toISOString();
+  return {
+    ...trip,
+    coverImageEmoji: trip.coverImageEmoji || '🏔️',
+    createdAt,
+    updatedAt: trip.updatedAt || createdAt,
+    participants: Array.isArray(trip.participants) ? trip.participants : [],
+    expenses: (trip.expenses || []).map((expense) => ({
+      ...expense,
+      splitMode: expense.splitMode || 'equal',
+      createdAt: expense.createdAt || createdAt,
+      updatedAt: expense.updatedAt || expense.createdAt || createdAt,
+    })),
+    settlements: (trip.settlements || []).map((settlement) => ({
+      ...settlement,
+      createdAt: settlement.createdAt || createdAt,
+      updatedAt: settlement.updatedAt || settlement.createdAt || createdAt,
+    })),
+    auditLogs: Array.isArray(trip.auditLogs) ? trip.auditLogs : [],
+  };
+}
 
 export function loadUserProfileFromStorage(): UserProfile | null {
   if (typeof window === 'undefined') return null;
   try {
     const data = localStorage.getItem(USER_PROFILE_STORAGE_KEY);
-    if (data) {
-      return JSON.parse(data);
-    }
-  } catch (e) {
-    console.error('Failed to load user profile:', e);
+    return data ? JSON.parse(data) as UserProfile : null;
+  } catch (error) {
+    console.error('Failed to load user profile:', error);
+    return null;
   }
-  return null;
 }
 
 export function saveUserProfileToStorage(profile: UserProfile): void {
   if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(profile));
-  } catch (e) {
-    console.error('Failed to save user profile:', e);
-  }
+  localStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(profile));
 }
 
-export function loadTripsFromStorage(): { trips: Trip[]; activeTripId: string } {
+export function loadTripsFromStorage(): StoredTripData {
   if (typeof window === 'undefined') {
-    return { trips: [], activeTripId: '' };
+    return { version: DATA_VERSION, trips: [], activeTripId: '', identityByTripId: {} };
   }
 
   try {
-    const data = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (data) {
-      const parsed = JSON.parse(data);
-      if (parsed.trips && Array.isArray(parsed.trips)) {
-        return parsed;
-      }
-    }
-  } catch (e) {
-    console.error('Failed to load trips from storage:', e);
+    const current = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const legacy = LEGACY_STORAGE_KEYS.map((key) => localStorage.getItem(key)).find(Boolean);
+    const raw = current || legacy;
+    if (!raw) return { version: DATA_VERSION, trips: [], activeTripId: '', identityByTripId: {} };
+    const parsed = JSON.parse(raw) as Partial<StoredTripData>;
+    const trips = Array.isArray(parsed.trips) ? parsed.trips.map(migrateTrip) : [];
+    const activeTripId = trips.some((trip) => trip.id === parsed.activeTripId) ? parsed.activeTripId || '' : '';
+    const migrated = {
+      version: DATA_VERSION,
+      trips,
+      activeTripId,
+      identityByTripId: parsed.identityByTripId || {},
+    };
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(migrated));
+    return migrated;
+  } catch (error) {
+    console.error('Failed to load trips:', error);
+    return { version: DATA_VERSION, trips: [], activeTripId: '', identityByTripId: {} };
   }
-
-  // Clear legacy localStorage keys if present
-  try {
-    localStorage.removeItem('trip_calculator_data_v1');
-    localStorage.removeItem('trip_calculator_data_v2');
-    localStorage.removeItem('trip_calculator_data_v3');
-  } catch (e) {}
-
-  return { trips: [], activeTripId: '' };
 }
 
-export function saveTripsToStorage(trips: Trip[], activeTripId: string): void {
+export function saveTripsToStorage(
+  trips: Trip[],
+  activeTripId: string,
+  identityByTripId: Record<string, string> = {},
+): void {
   if (typeof window === 'undefined') return;
-
-  try {
-    localStorage.setItem(
-      LOCAL_STORAGE_KEY,
-      JSON.stringify({ trips, activeTripId })
-    );
-  } catch (e) {
-    console.error('Failed to save trips to storage:', e);
-  }
+  const data: StoredTripData = {
+    version: DATA_VERSION,
+    trips,
+    activeTripId,
+    identityByTripId,
+  };
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
 }
 
 export function clearAllStorageData(): void {
   if (typeof window === 'undefined') return;
-  try {
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-    localStorage.removeItem(USER_PROFILE_STORAGE_KEY);
-    localStorage.removeItem('trip_calculator_data_v1');
-    localStorage.removeItem('trip_calculator_data_v2');
-    localStorage.removeItem('trip_calculator_data_v3');
-  } catch (e) {}
+  localStorage.removeItem(LOCAL_STORAGE_KEY);
+  localStorage.removeItem(USER_PROFILE_STORAGE_KEY);
+  LEGACY_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
 }
