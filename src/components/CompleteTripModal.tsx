@@ -2,9 +2,8 @@
 
 import React, { useState } from 'react';
 import { Trip, SimplifiedDebt } from '@/types/trip';
-import { getTripStats, calculateParticipantBalances } from '@/lib/debt-simplification';
-import { getTripDurationInDays, formatDateRange } from '@/lib/date-utils';
-import { X, CheckCircle2, Calendar, Trophy, AlertTriangle, Sparkles, Flag } from 'lucide-react';
+import { getTripStats } from '@/lib/debt-simplification';
+import { X, CheckCircle2, Calendar, AlertTriangle, Sparkles, Flag } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface CompleteTripModalProps {

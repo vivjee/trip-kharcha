@@ -1,4 +1,4 @@
-import { Trip } from '@/types/trip';
+import type { Trip } from '@/types/trip';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

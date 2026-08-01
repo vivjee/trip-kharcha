@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Trip, Participant } from '@/types/trip';
-import { X, UserPlus, Users } from 'lucide-react';
+import { X, UserPlus } from 'lucide-react';
 
 interface AddParticipantModalProps {
   trip: Trip;

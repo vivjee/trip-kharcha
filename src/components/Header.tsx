@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Trip } from '@/types/trip';
 import { getTripDurationInDays, formatDateRange } from '@/lib/date-utils';
 import { getTripInitials } from '@/lib/trip-utils';
-import { ChevronDown, Plus, Check, CheckCircle2, Share2, Trash2, RefreshCw, ArchiveRestore, X, LayoutGrid } from 'lucide-react';
+import { ChevronDown, Plus, Check, CheckCircle2, Share2, Trash2, RefreshCw, ArchiveRestore, LayoutGrid } from 'lucide-react';
 
 interface HeaderProps {
   currentTrip: Trip;
@@ -36,7 +36,7 @@ export default function Header({
   const dateRangeStr = formatDateRange(currentTrip);
 
   return (
-    <header className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-200 px-3 md:px-4 py-2 z-30 flex items-center justify-between shadow-2xs">
+    <header className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-200 px-3 md:px-4 pb-2 pt-[calc(.5rem+env(safe-area-inset-top))] z-30 flex items-center justify-between shadow-2xs">
       {/* Left: Trip Avatar & Switcher Dropdown */}
       <div className="relative flex items-center gap-1.5 min-w-0">
         <button
@@ -196,10 +196,11 @@ export default function Header({
         {/* Responsive Close / Exit Trip Button */}
         <button
           onClick={onCloseTrip}
-          className="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-2xs"
+          className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-2xs"
           title="Exit to My Trips Hub"
+          aria-label="Exit to My Trips Hub"
         >
-          <X className="w-4 h-4 stroke-[2.5]" />
+          <LayoutGrid className="w-4 h-4 stroke-[2.5]" />
         </button>
       </div>
     </header>

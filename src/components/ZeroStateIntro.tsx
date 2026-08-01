@@ -48,7 +48,7 @@ export default function ZeroStateIntro({
           <div>
             <h1 className="text-xs font-black text-white tracking-wide">Trip Calculator</h1>
             <p className="text-[9px] font-extrabold text-indigo-300 uppercase tracking-widest">
-              Nepal Edition
+              Nepal Edition · v2
             </p>
           </div>
         </div>

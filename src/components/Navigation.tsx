@@ -27,7 +27,7 @@ export default function Navigation({ activeTab, setActiveTab, pendingDebtsCount 
   ];
 
   return (
-    <nav className="absolute bottom-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-2xl border-t border-slate-200/90 flex items-center justify-around px-2 z-40 shadow-xl shadow-slate-950/5">
+    <nav aria-label="Trip sections" className="fixed bottom-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-white/95 backdrop-blur-2xl border-t border-slate-200/90 flex items-center justify-around px-2 z-40 shadow-xl shadow-slate-950/5">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = activeTab === item.id;
@@ -61,7 +61,7 @@ export default function Navigation({ activeTab, setActiveTab, pendingDebtsCount 
                 </motion.span>
               )}
             </div>
-            <span className="text-[10px] font-extrabold mt-1 tracking-tight">{item.label}</span>
+            <span className="text-[11px] font-extrabold mt-1 tracking-tight">{item.label}</span>
 
             {/* Sliding Luxury Active Pill Indicator */}
             {isActive && (

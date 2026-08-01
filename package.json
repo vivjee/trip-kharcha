@@ -1,12 +1,13 @@
 {
   "name": "trip-calculator",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --test src/lib/date-utils.test.ts src/lib/debt-simplification.test.ts",
     "cap:sync": "next build && npx cap sync",
     "apk:build": "next build && npx cap sync android && cd android && $env:GRADLE_USER_HOME=\"C:\\gradle_cache\"; .\\gradlew.bat --no-daemon assembleDebug"
   },

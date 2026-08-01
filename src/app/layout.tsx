@@ -9,8 +9,8 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Trip Calculator | Continuous Expense & Debt Simplification",
-  description: "Continuous group trip expense tracking with minimum cash flow debt simplification in NPR.",
+  title: "Trip Calculator v2 | Nepal Group Expenses",
+  description: "Private, offline-first group trip expense tracking with flexible splits and simplified settlements in NPR.",
 };
 
 export default function RootLayout({

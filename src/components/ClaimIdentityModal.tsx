@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Trip, Participant } from '@/types/trip';
-import { X, UserCheck, CheckCircle2, Shield } from 'lucide-react';
+import { Trip } from '@/types/trip';
+import { X, UserCheck, CheckCircle2 } from 'lucide-react';
 
 interface ClaimIdentityModalProps {
   trip: Trip;

@@ -1,4 +1,4 @@
-import { Expense, ParticipantBalance, SimplifiedDebt, Trip } from '@/types/trip';
+import type { Expense, ParticipantBalance, SimplifiedDebt, Trip } from '@/types/trip';
 
 const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
 

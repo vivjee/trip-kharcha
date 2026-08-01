@@ -49,8 +49,8 @@ export default function AnalyticsView({ trip }: AnalyticsViewProps) {
   });
 
   const categoriesSorted = Object.entries(categoryTotals)
-    .filter(([_, amt]) => amt > 0)
-    .sort(([_, a], [__, b]) => b - a);
+    .filter(([, amount]) => amount > 0)
+    .sort(([, firstAmount], [, secondAmount]) => secondAmount - firstAmount);
 
   return (
     <div className="p-4 space-y-4 animate-pop-in">

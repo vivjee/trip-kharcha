@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Trip, UserProfile } from '@/types/trip';
 import { getTripInitials } from '@/lib/trip-utils';
 import { getTripDurationInDays, formatDateRange } from '@/lib/date-utils';
-import { Plus, MapPin, Sparkles, User, Calendar, Users, ArrowRight, Trash2, CheckCircle2, ChevronRight, Compass } from 'lucide-react';
+import { Plus, User, Calendar, Trash2, CheckCircle2, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Avatar from '@/components/Avatar';
 import StoredPhoto from '@/components/StoredPhoto';
@@ -44,7 +44,7 @@ export default function TripsHubView({
   }, 0);
 
   return (
-    <div className="w-full min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-between p-4 md:p-6 relative select-none">
+    <div className="w-full min-h-dvh bg-slate-900 text-slate-100 flex flex-col justify-between p-4 pt-[calc(1rem+env(safe-area-inset-top))] md:p-6 relative select-none">
       {/* Background Subtle Gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950/60 pointer-events-none" />
 
@@ -58,7 +58,7 @@ export default function TripsHubView({
             <h1 className="text-sm font-black text-white tracking-wide flex items-center gap-1.5">
               <span>My Trips Hub</span>
               <span className="text-[9px] font-extrabold text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-full border border-indigo-400/30">
-                Nepal
+                v2
               </span>
             </h1>
             <p className="text-[10px] font-semibold text-slate-400">
@@ -125,7 +125,7 @@ export default function TripsHubView({
 
           <button
             onClick={onOpenNewTripModal}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-black shadow-lg shadow-indigo-950/50 border border-white/20 transition-all active:scale-95 cursor-pointer"
+            className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-black shadow-lg shadow-indigo-950/50 border border-white/20 transition-all active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
             <span>New Trip</span>
