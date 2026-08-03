@@ -9,13 +9,14 @@ import { Plus, ArrowRightLeft, Users, CheckCircle, Sparkles, ArrowUpRight } from
 import StoredPhoto from '@/components/StoredPhoto';
 import PhotoPicker from '@/components/PhotoPicker';
 import Avatar from '@/components/Avatar';
+import CompletedTripOverview from '@/components/CompletedTripOverview';
 
 interface TripDashboardProps {
   trip: Trip;
   simplifiedDebts: SimplifiedDebt[];
   onOpenAddExpense: () => void;
   onOpenSettleUp: (debt?: SimplifiedDebt) => void;
-  onNavigateTab: (tab: 'expenses' | 'balances') => void;
+  onNavigateTab: (tab: 'expenses' | 'balances' | 'analytics') => void;
   onOpenAddParticipant: () => void;
   onUpdateCover: (photoId: string | undefined, accentColor?: string) => void;
 }
@@ -29,6 +30,18 @@ export default function TripDashboard({
   onOpenAddParticipant,
   onUpdateCover,
 }: TripDashboardProps) {
+  if (trip.status === 'completed') {
+    return (
+      <CompletedTripOverview
+        trip={trip}
+        simplifiedDebts={simplifiedDebts}
+        onOpenSettleUp={onOpenSettleUp}
+        onNavigateTab={onNavigateTab}
+        onUpdateCover={onUpdateCover}
+      />
+    );
+  }
+
   const stats = getTripStats(trip);
   const balances = calculateParticipantBalances(trip);
 
