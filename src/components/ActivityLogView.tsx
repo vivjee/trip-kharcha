@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Trip, AuditLogEntry } from '@/types/trip';
-import { History, PlusCircle, Trash2, CheckCircle2, UserCheck, Sparkles, Filter, PencilLine, UserMinus, UserPlus } from 'lucide-react';
+import { History, PlusCircle, Trash2, CheckCircle2, UserCheck, Sparkles, Filter, PencilLine, UserMinus, UserPlus, Flag, RotateCcw, Camera, Download, MapPlus } from 'lucide-react';
 import Avatar from '@/components/Avatar';
 import { formatDateTime } from '@/lib/date-utils';
 
@@ -44,6 +44,16 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
         return { label: 'Removed Member', bg: 'bg-rose-50 text-rose-700 border-rose-200', icon: UserMinus };
       case 'UPDATE_TRIP':
         return { label: 'Edited Trip', bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: PencilLine };
+      case 'CREATE_TRIP':
+        return { label: 'Created Trip', bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: MapPlus };
+      case 'COMPLETE_TRIP':
+        return { label: 'Completed Trip', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: Flag };
+      case 'REOPEN_TRIP':
+        return { label: 'Reopened Trip', bg: 'bg-amber-50 text-amber-700 border-amber-200', icon: RotateCcw };
+      case 'UPDATE_COVER':
+        return { label: 'Changed Cover', bg: 'bg-violet-50 text-violet-700 border-violet-200', icon: Camera };
+      case 'IMPORT_TRIP':
+        return { label: 'Imported Trip', bg: 'bg-blue-50 text-blue-700 border-blue-200', icon: Download };
       default:
         return { label: 'Trip Action', bg: 'bg-slate-100 text-slate-700 border-slate-200', icon: History };
     }
@@ -73,7 +83,7 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
               onChange={(e) => setFilterParticipantId(e.target.value)}
               className="min-h-10 flex-1 cursor-pointer bg-transparent text-xs font-extrabold text-slate-700 focus:outline-none"
             >
-              <option value="all">All Members ({logs.length})</option>
+              <option value="all">All activity ({logs.length})</option>
               {trip.participants.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.avatar} {p.name}

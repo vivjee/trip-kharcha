@@ -109,7 +109,7 @@ export default function AnalyticsView({ trip }: AnalyticsViewProps) {
             Spending by Category
           </h3>
           <span className="text-xs font-medium text-slate-500">
-            {categoriesSorted.length} Categories
+            {categoriesSorted.length} {categoriesSorted.length === 1 ? 'Category' : 'Categories'}
           </span>
         </div>
 
