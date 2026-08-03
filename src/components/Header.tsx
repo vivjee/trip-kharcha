@@ -140,10 +140,11 @@ export default function Header({
         <AppButton
           onClick={onToggleTripStatus}
           size="standard"
+          variant={currentTrip.status === 'active' ? 'secondary' : 'primary'}
           className={`rounded-full px-3 ${
             currentTrip.status === 'active'
               ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-              : 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 shadow-xs'
+              : ''
           }`}
           title="Click to toggle trip active/completed status"
         >

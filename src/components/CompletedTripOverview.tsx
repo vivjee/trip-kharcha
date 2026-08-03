@@ -99,7 +99,7 @@ export default function CompletedTripOverview({
                 <p className="text-3xl font-black tracking-tight text-white">
                   <span className="mr-1 text-lg text-amber-300">{trip.currencySymbol}</span>{stats.totalSpent.toLocaleString()}
                 </p>
-                <p className="pb-1 text-xs font-extrabold text-white/70">{stats.totalExpensesCount} expenses</p>
+                <p className="pb-1 text-xs font-extrabold text-white/70">{stats.totalExpensesCount} {stats.totalExpensesCount === 1 ? 'expense' : 'expenses'}</p>
               </div>
             </div>
           </div>
