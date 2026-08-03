@@ -26,6 +26,7 @@ import TripModal from '@/components/TripModal';
 import EditTripModal, { type TripDetailsUpdate } from '@/components/EditTripModal';
 import ShareSummaryModal from '@/components/ShareSummaryModal';
 import CompleteTripModal from '@/components/CompleteTripModal';
+import ReopenTripModal from '@/components/ReopenTripModal';
 import AddParticipantModal from '@/components/AddParticipantModal';
 import SyncTripModal from '@/components/SyncTripModal';
 import ClaimIdentityModal from '@/components/ClaimIdentityModal';
@@ -58,6 +59,7 @@ export default function Home() {
   const [isEditTripOpen, setIsEditTripOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isCompleteTripOpen, setIsCompleteTripOpen] = useState(false);
+  const [isReopenTripOpen, setIsReopenTripOpen] = useState(false);
   const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isClaimIdentityOpen, setIsClaimIdentityOpen] = useState(false);
@@ -232,20 +234,25 @@ export default function Home() {
 
   const handleToggleTripStatus = () => {
     if (!currentTrip) return;
-    const newStatus = currentTrip.status === 'active' ? 'completed' : 'active';
-    if (newStatus === 'completed') {
+    if (currentTrip.status === 'active') {
       setIsCompleteTripOpen(true);
     } else {
-      const actor = currentTrip.participants.find((participant) => participant.id === currentParticipantId);
-      const updatedTrip = appendAuditLog(
-        { ...currentTrip, status: newStatus, endDate: undefined },
-        'REOPEN_TRIP',
-        `Reopened trip “${currentTrip.name}”`,
-        actor,
-      );
-      setTrips(trips.map((t) => (t.id === currentTrip.id ? updatedTrip : t)));
-      showToast('Trip status updated to Active');
+      setIsReopenTripOpen(true);
     }
+  };
+
+  const handleConfirmReopenTrip = () => {
+    if (!currentTrip) return;
+    const actor = currentTrip.participants.find((participant) => participant.id === currentParticipantId);
+    const updatedTrip = appendAuditLog(
+      { ...currentTrip, status: 'active', endDate: undefined },
+      'REOPEN_TRIP',
+      `Reopened trip “${currentTrip.name}”`,
+      actor,
+    );
+    setTrips(trips.map((trip) => trip.id === currentTrip.id ? updatedTrip : trip));
+    setIsReopenTripOpen(false);
+    showToast('Trip status updated to Active');
   };
 
   const handleConfirmCompleteTrip = (endDate: string) => {
@@ -691,6 +698,13 @@ export default function Home() {
         isOpen={isCompleteTripOpen}
         onClose={() => setIsCompleteTripOpen(false)}
         onConfirmComplete={handleConfirmCompleteTrip}
+      />
+
+      <ReopenTripModal
+        trip={currentTrip}
+        isOpen={isReopenTripOpen}
+        onClose={() => setIsReopenTripOpen(false)}
+        onConfirm={handleConfirmReopenTrip}
       />
 
       {isAddParticipantOpen && (

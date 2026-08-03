@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Trip } from '@/types/trip';
 import { getTripDurationInDays, formatDateRange } from '@/lib/date-utils';
 import { getTripInitials } from '@/lib/trip-utils';
@@ -34,15 +34,36 @@ export default function Header({
   onResetDemoData,
 }: HeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const tripSwitcherRef = useRef<HTMLDivElement>(null);
   const durationDays = getTripDurationInDays(currentTrip);
   const dateRangeStr = formatDateRange(currentTrip);
+
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (!tripSwitcherRef.current?.contains(event.target as Node)) setIsDropdownOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsDropdownOpen(false);
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isDropdownOpen]);
 
   return (
     <header className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-200 px-3 md:px-4 pb-2 pt-[calc(.5rem+env(safe-area-inset-top))] z-30 flex items-center justify-between shadow-2xs">
       {/* Left: Trip Avatar & Switcher Dropdown */}
-      <div className="relative flex items-center gap-1.5 min-w-0">
+      <div ref={tripSwitcherRef} className="relative flex items-center gap-1.5 min-w-0">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          aria-expanded={isDropdownOpen}
+          aria-haspopup="menu"
           className="flex items-center gap-2 text-left cursor-pointer group focus:outline-none min-w-0"
         >
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 text-white font-black text-xs flex items-center justify-center shadow-xs border border-white/20 flex-shrink-0">

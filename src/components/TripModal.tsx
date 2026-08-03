@@ -66,20 +66,27 @@ function TripForm({ userProfile, existingTrips = [], onClose, onCreateTrip }: Om
     setAccentColor(color);
   };
 
+  const pendingMemberName = newMemberName.trim();
+  const pendingMemberIsNew = Boolean(pendingMemberName) && !participants.some((participant) => participant.name.toLowerCase() === pendingMemberName.toLowerCase());
+  const canCreateTrip = participants.length >= 2 || pendingMemberIsNew;
+
   const addMember = () => {
-    const trimmedName = newMemberName.trim();
-    if (!trimmedName || participants.some((participant) => participant.name.toLowerCase() === trimmedName.toLowerCase())) return;
+    if (!pendingMemberIsNew) return;
     const pool = newMemberGender === 'male' ? maleAvatars : femaleAvatars;
-    setParticipants([...participants, { name: trimmedName, avatar: pool[participants.length % pool.length], isMe: false }]);
+    setParticipants([...participants, { name: pendingMemberName, avatar: pool[participants.length % pool.length], isMe: false }]);
     setNewMemberName('');
   };
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!name.trim() || participants.length < 2) return;
+    const pendingAvatarPool = newMemberGender === 'male' ? maleAvatars : femaleAvatars;
+    const participantsToCreate = pendingMemberIsNew
+      ? [...participants, { name: pendingMemberName, avatar: pendingAvatarPool[participants.length % pendingAvatarPool.length], isMe: false }]
+      : participants;
+    if (!name.trim() || participantsToCreate.length < 2) return;
     const colors = ['emerald', 'blue', 'purple', 'amber', 'rose', 'indigo'];
     let hostId: string | undefined;
-    const formattedParticipants = participants.map((participant, index): Participant => {
+    const formattedParticipants = participantsToCreate.map((participant, index): Participant => {
       const id = participant.isMe && userProfile ? userProfile.id : `part-${Date.now()}-${index}`;
       if (participant.isMe) hostId = id;
       return {
@@ -124,8 +131,21 @@ function TripForm({ userProfile, existingTrips = [], onClose, onCreateTrip }: Om
           ) : (
             <>
               <div className="bg-indigo-50 p-3.5 rounded-2xl border border-indigo-100"><p className="text-sm font-extrabold text-indigo-950 flex items-center gap-1.5"><Users className="w-4 h-4" />Who is joining {name}?</p><p className="text-xs text-slate-600 mt-1">Your profile is already included.</p></div>
-              <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
-                {participants.map((participant, index) => <div key={`${participant.name}-${index}`} className={`flex items-center justify-between p-3 rounded-2xl border ${participant.isMe ? 'bg-purple-50 border-purple-200' : 'bg-white border-slate-200'}`}><div className="flex items-center gap-2.5"><span className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center text-lg overflow-hidden">{participant.avatar}</span><p className="text-sm font-extrabold text-slate-900">{participant.name} {participant.isMe && <span className="text-[10px] uppercase text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">You</span>}</p></div>{!participant.isMe && <button type="button" onClick={() => setParticipants(participants.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Remove ${participant.name}`} className="w-10 h-10 text-slate-400 hover:text-rose-600 rounded-xl flex items-center justify-center cursor-pointer"><Trash2 className="w-4 h-4" /></button>}</div>)}
+              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto no-scrollbar">
+                {participants.map((participant, index) => (
+                  <div key={`${participant.name}-${index}`} className={`flex min-w-0 items-center gap-2 rounded-xl border p-2 ${participant.isMe ? 'bg-purple-50 border-purple-200' : 'bg-white border-slate-200'}`}>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white text-base">{participant.avatar}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-extrabold text-slate-900">{participant.name}</p>
+                      {participant.isMe && <span className="text-[9px] font-black uppercase text-purple-700">You</span>}
+                    </div>
+                    {!participant.isMe && (
+                      <button type="button" onClick={() => setParticipants(participants.filter((_, itemIndex) => itemIndex !== index))} aria-label={`Remove ${participant.name}`} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 cursor-pointer">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
 
               {suggestedMembers.length > 0 && <div className="space-y-2"><p className="text-xs font-extrabold text-indigo-900 uppercase tracking-wide flex items-center gap-1"><Sparkles className="w-4 h-4 text-amber-500" />Recent friends</p><div className="flex gap-2 overflow-x-auto no-scrollbar">{suggestedMembers.map((participant) => <button key={participant.id} type="button" onClick={() => setParticipants([...participants, { name: participant.name, avatar: participant.avatar, photoId: participant.photoId, profileId: participant.profileId, isMe: false }])} className="min-h-11 px-3 rounded-xl bg-indigo-50 border border-indigo-200 text-sm font-bold text-indigo-950 whitespace-nowrap cursor-pointer">{participant.avatar} {participant.name} <Plus className="w-3.5 h-3.5 inline" /></button>)}</div></div>}
@@ -134,8 +154,8 @@ function TripForm({ userProfile, existingTrips = [], onClose, onCreateTrip }: Om
                 <div className="flex items-center justify-between"><span className="text-xs font-extrabold text-slate-600 uppercase">Add a friend</span><div className="flex bg-slate-200 p-1 rounded-lg text-xs font-bold"><button type="button" onClick={() => setNewMemberGender('male')} className={`px-3 py-1 rounded-md cursor-pointer ${newMemberGender === 'male' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600'}`}>👦 Male</button><button type="button" onClick={() => setNewMemberGender('female')} className={`px-3 py-1 rounded-md cursor-pointer ${newMemberGender === 'female' ? 'bg-white text-purple-700 shadow-sm' : 'text-slate-600'}`}>👩 Female</button></div></div>
                 <div className="flex gap-2"><input type="text" placeholder="Friend’s name" value={newMemberName} onChange={(event) => setNewMemberName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addMember(); } }} className="flex-1 min-w-0 px-3.5 py-3 rounded-xl border border-slate-300 text-sm font-semibold bg-white" /><button type="button" onClick={addMember} className="min-w-20 rounded-xl bg-slate-900 text-white font-bold text-sm cursor-pointer"><Plus className="w-4 h-4 inline mr-1" />Add</button></div>
               </div>
-              {participants.length < 2 && <p className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-3">Add at least one friend to start the trip.</p>}
-              <div className="flex gap-3 pt-2"><button type="button" onClick={() => setStep(1)} className="w-1/3 min-h-12 rounded-xl border border-slate-300 text-slate-700 font-bold text-sm flex items-center justify-center gap-1 cursor-pointer"><ArrowLeft className="w-4 h-4" />Back</button><button type="submit" disabled={participants.length < 2} className="w-2/3 min-h-12 rounded-xl bg-indigo-600 text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:bg-slate-200 disabled:text-slate-400"><Check className="w-4 h-4" />Create & Start Trip</button></div>
+              {!canCreateTrip && <p className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-3">Add at least one friend to start the trip.</p>}
+              <div className="flex gap-3 pt-2"><button type="button" onClick={() => setStep(1)} className="w-1/3 min-h-12 rounded-xl border border-slate-300 text-slate-700 font-bold text-sm flex items-center justify-center gap-1 cursor-pointer"><ArrowLeft className="w-4 h-4" />Back</button><button type="submit" disabled={!canCreateTrip} className="w-2/3 min-h-12 rounded-xl bg-indigo-600 text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:bg-slate-200 disabled:text-slate-400"><Check className="w-4 h-4" />Create & Start Trip</button></div>
             </>
           )}
         </form>
