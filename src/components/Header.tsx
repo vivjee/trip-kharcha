@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Trip } from '@/types/trip';
 import { getTripDurationInDays, formatDateRange } from '@/lib/date-utils';
 import { getTripInitials } from '@/lib/trip-utils';
-import { ChevronDown, Check, CheckCircle2, Ellipsis, LayoutGrid } from 'lucide-react';
+import { ChevronDown, Check, CheckCircle2, Ellipsis, LayoutGrid, Plus } from 'lucide-react';
 import AppButton from '@/components/AppButton';
 import HeaderActionsSheet from '@/components/HeaderActionsSheet';
 
@@ -15,6 +15,7 @@ interface HeaderProps {
   onCloseTrip: () => void;
   onOpenNewTripModal: () => void;
   onOpenEditTripModal: () => void;
+  onOpenAddExpense: () => void;
   onToggleTripStatus: () => void;
   onOpenShareModal: () => void;
   onOpenSyncModal: () => void;
@@ -29,6 +30,7 @@ export default function Header({
   onCloseTrip,
   onOpenNewTripModal,
   onOpenEditTripModal,
+  onOpenAddExpense,
   onToggleTripStatus,
   onOpenShareModal,
   onOpenSyncModal,
@@ -136,7 +138,7 @@ export default function Header({
         )}
       </div>
 
-      <div className="flex flex-shrink-0 items-center gap-2">
+      <div className="flex flex-shrink-0 items-center gap-1.5">
         <AppButton
           onClick={onToggleTripStatus}
           size="standard"
@@ -162,6 +164,16 @@ export default function Header({
               <span className="text-xs">Done</span>
             </>
           )}
+        </AppButton>
+        <AppButton
+          size="icon"
+          variant="primary"
+          onClick={onOpenAddExpense}
+          disabled={currentTrip.status === 'completed'}
+          title={currentTrip.status === 'active' ? 'Add expense' : 'Reopen the trip to add an expense'}
+          aria-label={currentTrip.status === 'active' ? 'Add expense' : 'Reopen the trip to add an expense'}
+        >
+          <Plus className="h-5 w-5 stroke-[2.5]" />
         </AppButton>
         <AppButton
           size="icon"

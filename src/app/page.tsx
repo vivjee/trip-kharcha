@@ -525,6 +525,10 @@ export default function Home() {
         onCloseTrip={handleCloseTrip}
         onOpenNewTripModal={() => setIsTripModalOpen(true)}
         onOpenEditTripModal={() => setIsEditTripOpen(true)}
+        onOpenAddExpense={() => {
+          setExpenseToEdit(undefined);
+          setIsAddExpenseOpen(true);
+        }}
         onToggleTripStatus={handleToggleTripStatus}
         onOpenShareModal={() => setIsShareModalOpen(true)}
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
