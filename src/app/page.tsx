@@ -555,7 +555,6 @@ export default function Home() {
                   setIsAddExpenseOpen(true);
                 }}
                 onOpenSettleUp={(debt) => handleOpenSettleUpWithDebt(debt)}
-                onOpenAddParticipant={() => setIsAddParticipantOpen(true)}
                 onNavigateTab={(tab) => setActiveTab(tab)}
                 onUpdateCover={handleUpdateCover}
               />
