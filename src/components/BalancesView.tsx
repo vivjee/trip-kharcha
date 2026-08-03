@@ -28,7 +28,7 @@ export default function BalancesView({
   const getParticipant = (id: string) => trip.participants.find((participant) => participant.id === id);
 
   return (
-    <div className="p-4 space-y-4 animate-pop-in">
+    <div className="mx-auto w-full max-w-5xl space-y-4 p-4 animate-pop-in md:p-5">
       {/* View Title */}
       <div>
         <h2 className="text-base font-black text-slate-900 leading-tight">Balances & Settlements</h2>
@@ -63,7 +63,7 @@ export default function BalancesView({
           />
         </div>
 
-        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+        <div className="font-amount flex items-center justify-between text-xs font-medium text-slate-500">
           <span>Recorded: {trip.currencySymbol} {progress.recorded.toLocaleString()}</span>
           <span>Pending: {trip.currencySymbol} {progress.pending.toLocaleString()}</span>
         </div>
@@ -138,7 +138,7 @@ export default function BalancesView({
                     </span>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="text-sm font-black text-slate-900">
+                    <p className="font-amount text-sm font-black text-slate-900">
                       {trip.currencySymbol} {debt.amount.toLocaleString()}
                     </p>
                     <p className="text-xs text-slate-500 font-medium">To settle</p>

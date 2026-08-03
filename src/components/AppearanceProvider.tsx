@@ -16,6 +16,7 @@ import {
   type FontStyle,
   type SurfaceStyle,
 } from '@/lib/appearance';
+import DialogAccessibility from '@/components/DialogAccessibility';
 
 interface AppearanceContextValue {
   preferences: AppearancePreferences;
@@ -102,7 +103,7 @@ export default function AppearanceProvider({ children }: { children: React.React
     },
   }), [preferences, setPresetId, update]);
 
-  return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;
+  return <AppearanceContext.Provider value={value}><DialogAccessibility />{children}</AppearanceContext.Provider>;
 }
 
 export function useAppearance() {

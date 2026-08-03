@@ -68,10 +68,10 @@ export default function TripDashboard({
   const pendingTotal = simplifiedDebts.reduce((sum, debt) => sum + debt.amount, 0);
 
   return (
-    <div className="space-y-4 p-4 animate-pop-in">
-      <section aria-label="Trip overview">
+    <div className="mx-auto w-full max-w-5xl space-y-4 p-4 animate-pop-in md:p-5">
+      <section aria-label="Trip overview" className="lg:grid lg:grid-cols-[1.12fr_.88fr] lg:items-stretch lg:gap-4">
         <div
-          className="relative h-36 overflow-hidden rounded-2xl bg-indigo-800"
+          className="relative h-36 overflow-hidden rounded-2xl bg-indigo-800 lg:h-auto lg:min-h-56"
           style={trip.accentColor && !trip.coverPhotoId ? { backgroundColor: trip.accentColor } : undefined}
         >
           {trip.coverPhotoId ? (
@@ -88,10 +88,10 @@ export default function TripDashboard({
           </div>
         </div>
 
-        <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
+        <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs lg:mt-0">
           <p className="text-xs font-bold text-slate-500">Total spent</p>
           <div className="mt-1 flex min-w-0 items-baseline gap-2">
-            <p className="truncate text-3xl font-black tracking-tight text-slate-950">{trip.currencySymbol} {stats.totalSpent.toLocaleString()}</p>
+            <p className="font-amount truncate text-3xl font-black tracking-tight text-slate-950">{trip.currencySymbol} {stats.totalSpent.toLocaleString()}</p>
             <span className="shrink-0 text-xs font-extrabold text-slate-500">{trip.currency}</span>
           </div>
           <p className="mt-1 text-xs font-semibold text-slate-500">{stats.totalExpensesCount} {stats.totalExpensesCount === 1 ? 'expense' : 'expenses'}</p>

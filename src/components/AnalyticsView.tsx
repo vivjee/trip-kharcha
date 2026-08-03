@@ -25,8 +25,8 @@ export default function AnalyticsView({ trip }: AnalyticsViewProps) {
   const isLive = trip.status === 'active';
 
   return (
-    <div className="space-y-4 p-4 pb-6 animate-pop-in">
-      <header className="flex items-start justify-between gap-3">
+    <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 p-4 pb-6 animate-pop-in md:p-5 lg:grid-cols-2">
+      <header className="flex items-start justify-between gap-3 lg:col-span-2">
         <div className="min-w-0">
           <h2 className="text-base font-black leading-tight text-slate-950">{isLive ? 'Live trip analytics' : 'Trip analytics'}</h2>
           <p className="mt-1 text-xs font-medium text-slate-500">{formatDateRange(trip)} · {durationDays} {durationDays === 1 ? 'day' : 'days'}</p>
@@ -36,9 +36,9 @@ export default function AnalyticsView({ trip }: AnalyticsViewProps) {
         </span>
       </header>
 
-      <section className="rounded-2xl border border-indigo-200 bg-indigo-600 p-4 text-white shadow-2xs" aria-label="Trip spending total">
+      <section className="rounded-2xl border border-indigo-200 bg-indigo-600 p-4 text-white shadow-2xs lg:col-span-2" aria-label="Trip spending total">
         <p className="text-xs font-bold text-indigo-100">Total spent so far</p>
-        <p className="mt-1 truncate text-3xl font-black tracking-tight">{trip.currencySymbol} {stats.totalSpent.toLocaleString()}</p>
+        <p className="font-amount mt-1 truncate text-3xl font-black tracking-tight">{trip.currencySymbol} {stats.totalSpent.toLocaleString()}</p>
         <p className="mt-2 text-xs font-semibold text-indigo-100">
           {stats.totalExpensesCount} {stats.totalExpensesCount === 1 ? 'expense' : 'expenses'} across {recap.dailySpending.length} spending {recap.dailySpending.length === 1 ? 'day' : 'days'}
         </p>

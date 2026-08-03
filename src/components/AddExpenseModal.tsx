@@ -180,7 +180,7 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-sm flex items-end md:items-center justify-center md:p-4 animate-pop-in" role="dialog" aria-modal="true" aria-labelledby="expense-modal-title">
-      <div className="w-full max-w-md bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl border border-slate-200 overflow-hidden max-h-[94dvh] flex flex-col">
+      <div className="w-full max-w-2xl bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl border border-slate-200 overflow-hidden max-h-[94dvh] flex flex-col">
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center"><Calculator className="w-4 h-4" /></div>
@@ -213,13 +213,13 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
                   value={amountStr}
                   onChange={(event) => setAmountStr(event.target.value)}
                   placeholder="0"
-                  className="min-w-0 flex-1 border-0 bg-transparent p-0 text-right text-4xl font-black tracking-tight text-white placeholder:text-slate-600 focus:ring-0 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  className="font-amount min-w-0 flex-1 border-0 bg-transparent p-0 text-right text-4xl font-black tracking-tight text-white placeholder:text-slate-600 focus:ring-0 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 />
               </label>
             ) : (
               <div className="mt-2 flex items-center justify-between gap-3" aria-live="polite">
                 <span className="text-2xl font-black text-indigo-300">{trip.currencySymbol}</span>
-                <span className="text-right text-4xl font-black tracking-tight text-white">{payerTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                <span className="font-amount text-right text-4xl font-black tracking-tight text-white">{payerTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
               </div>
             )}
             <p className="mt-2 text-right text-xs font-semibold text-slate-400">

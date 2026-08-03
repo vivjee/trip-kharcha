@@ -31,6 +31,12 @@ function patternStyle(id: BackgroundPattern): React.CSSProperties {
   return {};
 }
 
+function surfacePreviewStyle(id: 'neumorphic' | 'material' | 'flat'): React.CSSProperties {
+  if (id === 'neumorphic') return { border: '1px solid var(--surface-border)', boxShadow: '5px 5px 11px var(--nm-lo),-5px -5px 11px var(--nm-hi)' };
+  if (id === 'material') return { border: '1px solid color-mix(in srgb,var(--text-hi) 9%,transparent)', boxShadow: '0 2px 5px color-mix(in srgb,var(--nm-lo) 45%,transparent),0 10px 20px color-mix(in srgb,var(--nm-lo) 30%,transparent)' };
+  return { border: '1px solid color-mix(in srgb,var(--text-hi) 17%,transparent)', boxShadow: '0 1px 2px color-mix(in srgb,var(--nm-lo) 12%,transparent)' };
+}
+
 export default function AppearanceSettings({ onClose }: { onClose: () => void }) {
   const appearance = useAppearance();
   const [section, setSection] = useState<Section>('theme');
@@ -77,7 +83,7 @@ export default function AppearanceSettings({ onClose }: { onClose: () => void })
           {appearance.surfaces.map((surface) => {
             const active = appearance.preferences.surfaceStyle === surface.id;
             return <button key={surface.id} aria-pressed={active} onClick={() => notify(`${surface.name} surfaces applied`, () => appearance.setSurfaceStyle(surface.id))} className={`rounded-2xl p-3 text-left cursor-pointer ${active ? 'surface-inset ring-1 ring-accent-2/60' : 'surface-card surface-interactive'}`}>
-              <span className="surface-inset grid h-20 place-items-center rounded-xl"><span className="surface-card grid h-10 w-24 place-items-center rounded-xl text-xs font-black text-text-hi">Button</span></span>
+              <span className="surface-inset grid h-20 place-items-center rounded-xl"><span className="grid h-10 w-24 place-items-center rounded-xl bg-surface text-xs font-black text-text-hi" style={surfacePreviewStyle(surface.id)}>Button</span></span>
               <span className="mt-3 block text-sm font-black text-text-hi">{surface.name}</span><span className="mt-1 block text-xs leading-relaxed text-text-low">{surface.description}</span>
             </button>;
           })}

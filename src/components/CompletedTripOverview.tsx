@@ -59,11 +59,11 @@ export default function CompletedTripOverview({
       variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.07 } } }}
       initial="hidden"
       animate="show"
-      className="p-4 space-y-4 pb-6"
+      className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 p-4 pb-6 md:p-5 lg:grid-cols-2"
     >
       <motion.section
         variants={itemVariants}
-        className="relative min-h-[320px] overflow-hidden rounded-2xl bg-slate-950 text-white shadow-md"
+        className="relative min-h-[320px] overflow-hidden rounded-2xl bg-slate-950 text-white shadow-md lg:col-span-2"
         style={!trip.coverPhotoId && trip.accentColor ? { background: `linear-gradient(145deg, ${trip.accentColor}, #0f172a 72%)` } : undefined}
       >
         {trip.coverPhotoId && <StoredPhoto photoId={trip.coverPhotoId} alt={`${trip.name} memory cover`} priority />}

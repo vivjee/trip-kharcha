@@ -40,7 +40,7 @@ export default function ExpensesView({
   });
 
   return (
-    <div className="p-4 space-y-4 animate-pop-in">
+    <div className="mx-auto w-full max-w-5xl space-y-4 p-4 animate-pop-in md:p-5">
       {/* Header & Add Button */}
       <div className="flex items-center justify-between">
         <div>
@@ -64,7 +64,7 @@ export default function ExpensesView({
             placeholder="Search expense title..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="min-h-12 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-4 text-sm font-medium text-slate-800 shadow-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="app-field min-h-12 w-full pl-10 pr-4 text-sm font-medium focus:outline-none"
           />
         </div>
 
@@ -98,7 +98,7 @@ export default function ExpensesView({
           </p>
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="grid gap-2.5 md:grid-cols-2">
           {filteredExpenses.map((expense) => {
               const payer = getParticipant(expense.paidById);
               const perPerson =
@@ -134,7 +134,7 @@ export default function ExpensesView({
                     </div>
 
                     <div className="text-right">
-                      <p className="text-sm font-black text-slate-900">
+                      <p className="font-amount text-sm font-black text-slate-900">
                         {trip.currencySymbol} {expense.amount.toLocaleString()}
                       </p>
                       <p className="mt-0.5 text-xs font-semibold text-indigo-600">

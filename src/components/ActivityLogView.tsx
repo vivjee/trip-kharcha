@@ -60,7 +60,7 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
   };
 
   return (
-    <div className="p-4 space-y-4 animate-pop-in">
+    <div className="mx-auto w-full max-w-5xl space-y-4 p-4 animate-pop-in md:p-5">
       {/* Header */}
       <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
         <div>
@@ -104,7 +104,7 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
           </p>
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="grid gap-2.5 md:grid-cols-2">
           {filteredLogs.slice().reverse().map((log) => {
             const badge = getActionBadge(log.actionType);
             const Icon = badge.icon;
