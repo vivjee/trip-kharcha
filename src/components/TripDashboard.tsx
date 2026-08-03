@@ -134,37 +134,38 @@ export default function TripDashboard({
       )}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-2 flex items-center justify-between gap-3">
           <h2 className="flex items-center gap-2 text-sm font-extrabold text-slate-900"><Users className="h-4 w-4 text-indigo-600" /> Participants ({trip.participants.length})</h2>
           <AppButton variant="ghost" size="compact" onClick={onOpenAddParticipant}>Manage</AppButton>
         </div>
-        <div className="space-y-3">
+        <div className={`grid gap-2 ${contributionBalances.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
           {contributionBalances.map((balance) => {
             const contribution = stats.totalSpent > 0 ? (balance.totalPaid / stats.totalSpent) * 100 : 0;
+            const paidAmountLabel = `${trip.currencySymbol} ${formatCompactAmount(balance.totalPaid)}`;
+            const balanceLabel = balance.netBalance > 0
+              ? `Gets ${trip.currencySymbol} ${formatCompactAmount(balance.netBalance)}`
+              : balance.netBalance < 0
+                ? `Owes ${trip.currencySymbol} ${formatCompactAmount(Math.abs(balance.netBalance))}`
+                : 'Settled';
+            const exactBalanceLabel = balance.netBalance > 0
+              ? `Gets back ${trip.currencySymbol} ${balance.netBalance.toLocaleString()}`
+              : balance.netBalance < 0
+                ? `Owes ${trip.currencySymbol} ${Math.abs(balance.netBalance).toLocaleString()}`
+                : 'Settled';
             return (
-              <div key={balance.participantId} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Avatar person={{ name: balance.participantName, avatar: balance.avatar, photoId: balance.photoId }} size="sm" />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-extrabold text-slate-900">{balance.participantName}</p>
-                      <p className={`mt-0.5 truncate text-xs font-bold ${balance.netBalance > 0 ? 'text-emerald-700' : balance.netBalance < 0 ? 'text-rose-700' : 'text-slate-500'}`}>
-                        {balance.netBalance > 0
-                          ? `Gets back ${trip.currencySymbol} ${balance.netBalance.toLocaleString()}`
-                          : balance.netBalance < 0
-                          ? `Owes ${trip.currencySymbol} ${Math.abs(balance.netBalance).toLocaleString()}`
-                          : 'Settled'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-sm font-black text-slate-950">{trip.currencySymbol} {balance.totalPaid.toLocaleString()}</p>
-                    <p className="text-xs font-semibold text-slate-500">{contribution.toFixed(0)}% paid</p>
-                  </div>
+              <div key={balance.participantId} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                <div className="flex min-w-0 items-center gap-2">
+                  <Avatar person={{ name: balance.participantName, avatar: balance.avatar, photoId: balance.photoId }} size="xs" />
+                  <p className="min-w-0 truncate text-sm font-extrabold text-slate-900" title={balance.participantName}>{balance.participantName}</p>
                 </div>
-                <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label={`${balance.participantName} contribution`} aria-valuenow={Math.round(contribution)} aria-valuemin={0} aria-valuemax={100}>
-                  <div className="h-full rounded-full bg-indigo-600" style={{ width: `${Math.min(contribution, 100)}%` }} />
+                <p className="mt-2 truncate text-sm font-black text-slate-950" title={`${trip.currencySymbol} ${balance.totalPaid.toLocaleString()} paid`}>{paidAmountLabel}</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label={`${balance.participantName} contribution`} aria-valuenow={Math.round(contribution)} aria-valuemin={0} aria-valuemax={100}>
+                    <div className="h-full rounded-full bg-indigo-600" style={{ width: `${Math.min(contribution, 100)}%` }} />
+                  </div>
+                  <p className="shrink-0 text-[11px] font-bold text-slate-500">{contribution.toFixed(0)}%</p>
                 </div>
+                <p className={`mt-1.5 truncate text-[11px] font-bold ${balance.netBalance > 0 ? 'text-emerald-700' : balance.netBalance < 0 ? 'text-rose-700' : 'text-slate-500'}`} title={exactBalanceLabel}>{balanceLabel}</p>
               </div>
             );
           })}
@@ -237,6 +238,13 @@ function SummaryMetric({ label, value }: { label: string; value: string }) {
       <p className="mt-1 truncate text-sm font-extrabold text-slate-900">{value}</p>
     </div>
   );
+}
+
+function formatCompactAmount(amount: number) {
+  return new Intl.NumberFormat('en-US', {
+    notation: Math.abs(amount) >= 10_000 ? 'compact' : 'standard',
+    maximumFractionDigits: Math.abs(amount) >= 10_000 ? 1 : 2,
+  }).format(amount);
 }
 
 const highlightTones = {
