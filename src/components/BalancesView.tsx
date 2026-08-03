@@ -4,7 +4,7 @@ import React from 'react';
 import { Settlement, Trip, SimplifiedDebt } from '@/types/trip';
 import { calculateParticipantBalances, getSettlementProgress } from '@/lib/debt-simplification';
 import { ArrowRight, CheckCircle2, Sparkles, Trophy, Pencil, Trash2, History } from 'lucide-react';
-import { formatSingleDate } from '@/lib/date-utils';
+import { formatDateTime, toLocalDateTimeInput } from '@/lib/date-utils';
 import Avatar from '@/components/Avatar';
 
 interface BalancesViewProps {
@@ -84,7 +84,7 @@ export default function BalancesView({
                 <div key={settlement.id} className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200">
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-slate-900 truncate">{from?.avatar} {from?.name} paid {to?.avatar} {to?.name}</p>
-                    <p className="text-xs text-slate-500">{formatSingleDate(settlement.date)} · {trip.currencySymbol} {settlement.amount.toLocaleString()}</p>
+                    <p className="text-xs text-slate-500">{formatDateTime(toLocalDateTimeInput(settlement.date, settlement.createdAt))} · {trip.currencySymbol} {settlement.amount.toLocaleString()}</p>
                   </div>
                   <div className="flex flex-shrink-0">
                     <button onClick={() => onEditSettlement(settlement)} aria-label={`Edit settlement from ${from?.name}`} className="w-10 h-10 rounded-xl text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 flex items-center justify-center cursor-pointer"><Pencil className="w-4 h-4" /></button>

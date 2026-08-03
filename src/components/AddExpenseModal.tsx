@@ -14,7 +14,7 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { getTodayLocalDate } from '@/lib/date-utils';
+import { getNowLocalDateTime, toLocalDateTimeInput } from '@/lib/date-utils';
 import { getExpenseShares } from '@/lib/debt-simplification';
 import { CategoryType, Expense, ExpensePayer, ExpenseShare, SplitMode, Trip } from '@/types/trip';
 
@@ -48,7 +48,9 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
   const [title, setTitle] = useState(expense?.title || '');
   const [amountStr, setAmountStr] = useState(expense ? String(expense.amount) : '');
   const [category, setCategory] = useState<CategoryType>(expense?.category || 'food');
-  const [date, setDate] = useState(expense?.date || getTodayLocalDate());
+  const [date, setDate] = useState(
+    expense ? toLocalDateTimeInput(expense.date, expense.createdAt) : getNowLocalDateTime(),
+  );
   const [paidById, setPaidById] = useState(expense?.paidById || trip.participants[0]?.id || '');
   const [isMultiPayer, setIsMultiPayer] = useState(Boolean(expense?.payers?.length));
   const [payerAmounts, setPayerAmounts] = useState<Record<string, string>>(toInputMap(expense?.payers));
@@ -179,14 +181,48 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
         </div>
 
         <form onSubmit={submit} className="p-5 overflow-y-auto space-y-5 no-scrollbar">
-          <div className="grid grid-cols-[1fr_132px] gap-3">
+          <section className="rounded-3xl border border-slate-700 bg-slate-950 px-5 py-4 shadow-lg shadow-slate-900/15" aria-labelledby="total-amount-label">
+            <div className="flex items-center justify-between">
+              <span id="total-amount-label" className="text-xs font-extrabold uppercase tracking-[0.16em] text-slate-300">Total amount</span>
+              <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold text-slate-300">{trip.currency}</span>
+            </div>
+            {!isMultiPayer ? (
+              <label className="mt-2 flex items-center gap-3">
+                <span className="text-2xl font-black text-indigo-300">{trip.currencySymbol}</span>
+                <input
+                  aria-label={`Total amount in ${trip.currency}`}
+                  type="number"
+                  inputMode="decimal"
+                  min="0.01"
+                  max="1000000000"
+                  step="0.01"
+                  required
+                  autoFocus={!expense}
+                  value={amountStr}
+                  onChange={(event) => setAmountStr(event.target.value)}
+                  placeholder="0"
+                  className="min-w-0 flex-1 border-0 bg-transparent p-0 text-right text-4xl font-black tracking-tight text-white placeholder:text-slate-600 focus:ring-0 focus:outline-none"
+                />
+              </label>
+            ) : (
+              <div className="mt-2 flex items-center justify-between gap-3" aria-live="polite">
+                <span className="text-2xl font-black text-indigo-300">{trip.currencySymbol}</span>
+                <span className="text-right text-4xl font-black tracking-tight text-white">{payerTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+              </div>
+            )}
+            <p className="mt-2 text-right text-[11px] font-semibold text-slate-400">
+              {isMultiPayer ? 'Calculated from everyone’s payments below' : 'Enter the full expense before choosing the split'}
+            </p>
+          </section>
+
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_190px] gap-3">
             <label className="space-y-1.5 text-sm font-bold text-slate-700">
               Expense title
               <input type="text" placeholder={`Defaults to ${selectedCategory?.label}`} value={title} onChange={(event) => setTitle(event.target.value)} className="w-full px-3.5 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm font-medium text-slate-900 bg-white" />
             </label>
             <label className="space-y-1.5 text-sm font-bold text-slate-700">
-              Date
-              <input type="date" required value={date} onChange={(event) => setDate(event.target.value)} className="w-full px-3 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm font-semibold text-slate-900 bg-white" />
+              Date & time
+              <input type="datetime-local" required value={date} onChange={(event) => setDate(event.target.value)} className="w-full px-3 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm font-semibold text-slate-900 bg-white" />
             </label>
           </div>
 
@@ -211,14 +247,11 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
             </div>
 
             {!isMultiPayer ? (
-              <div className="grid grid-cols-[1fr_150px] gap-3">
-                <label className="text-xs font-extrabold text-slate-500 uppercase space-y-1">Paid by
+              <div>
+                <label className="block text-xs font-extrabold text-slate-500 uppercase space-y-1">Paid by
                   <select value={paidById} onChange={(event) => setPaidById(event.target.value)} className="w-full px-3 py-3 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 bg-white">
                     {trip.participants.map((participant) => <option key={participant.id} value={participant.id}>{participant.avatar} {participant.name}</option>)}
                   </select>
-                </label>
-                <label className="text-xs font-extrabold text-slate-500 uppercase space-y-1">Total amount
-                  <div className="relative"><span className="absolute left-3 top-3 text-indigo-600 font-black">{trip.currencySymbol}</span><input type="number" inputMode="decimal" min="0.01" max="1000000000" step="0.01" required value={amountStr} onChange={(event) => setAmountStr(event.target.value)} placeholder="0.00" className="w-full pl-8 pr-3 py-3 rounded-xl border border-slate-300 text-base font-black text-right bg-white" /></div>
                 </label>
               </div>
             ) : (

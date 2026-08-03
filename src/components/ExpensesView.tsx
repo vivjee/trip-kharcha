@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Trip, Expense } from '@/types/trip';
 import { Plus, Search, Trash2, Calendar, User, Users, Pencil } from 'lucide-react';
+import { formatDateTime, toLocalDateTimeInput } from '@/lib/date-utils';
 
 interface ExpensesViewProps {
   trip: Trip;
@@ -124,7 +125,7 @@ export default function ExpensesView({
                         <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-1">
                           <span className="flex items-center gap-0.5">
                             <Calendar className="w-3 h-3 text-slate-400" />
-                            {expense.date}
+                            {formatDateTime(toLocalDateTimeInput(expense.date, expense.createdAt))}
                           </span>
                           <span>•</span>
                           <span className="capitalize px-1.5 py-0.2 rounded-md bg-slate-100 font-semibold text-slate-700">

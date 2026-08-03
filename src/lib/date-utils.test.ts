@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatDateRange, getTripDurationInDays, parseLocalDate } from './date-utils.ts';
+import { formatDateRange, formatDateTime, getTripDurationInDays, parseLocalDate, toLocalDateTimeInput } from './date-utils.ts';
 import type { Trip } from '../types/trip.ts';
 
 const trip = (startDate: string, endDate: string): Trip => ({
@@ -33,4 +33,13 @@ test('date-only strings are parsed in local time', () => {
   assert.equal(parsed.getFullYear(), 2026);
   assert.equal(parsed.getMonth(), 7);
   assert.equal(parsed.getDate(), 1);
+});
+
+test('current-year timestamps use the compact trip format', () => {
+  const year = new Date().getFullYear();
+  assert.equal(formatDateTime(`${year}-08-03T17:38`), 'Aug 3, 5:38 PM');
+});
+
+test('legacy date-only records inherit their recorded local time', () => {
+  assert.match(toLocalDateTimeInput('2026-08-03', '2026-08-03T11:53:00.000Z'), /^2026-08-03T\d{2}:\d{2}$/);
 });

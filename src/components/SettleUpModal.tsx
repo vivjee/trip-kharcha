@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ArrowRight, CheckCircle2, HandCoins, X } from 'lucide-react';
-import { getTodayLocalDate } from '@/lib/date-utils';
+import { getNowLocalDateTime, toLocalDateTimeInput } from '@/lib/date-utils';
 import { calculateSimplifiedDebts } from '@/lib/debt-simplification';
 import { Settlement, SimplifiedDebt, Trip } from '@/types/trip';
 
@@ -32,7 +32,9 @@ function SettlementForm({ trip, presetDebt, settlement, onClose, onSaveSettlemen
   const [fromId, setFromId] = useState(settlement?.fromParticipantId || initialDebt?.from.id || '');
   const [toId, setToId] = useState(settlement?.toParticipantId || initialDebt?.to.id || '');
   const [amountStr, setAmountStr] = useState(String(settlement?.amount || initialDebt?.amount || ''));
-  const [date, setDate] = useState(settlement?.date || getTodayLocalDate());
+  const [date, setDate] = useState(
+    settlement ? toLocalDateTimeInput(settlement.date, settlement.createdAt) : getNowLocalDateTime(),
+  );
   const [notes, setNotes] = useState(settlement?.notes || '');
 
   const selectedDebt = debts.find((debt) => debt.from.id === fromId && debt.to.id === toId);
@@ -115,8 +117,8 @@ function SettlementForm({ trip, presetDebt, settlement, onClose, onSaveSettlemen
                   <span className="block text-xs font-medium text-slate-500">Outstanding: {trip.currencySymbol} {maxAmount.toLocaleString()}</span>
                   {amount > maxAmount && <span className="block text-xs font-semibold text-rose-600">Amount cannot exceed the outstanding balance.</span>}
                 </label>
-                <label className="text-sm font-bold text-slate-700 space-y-1.5">Payment date
-                  <input type="date" required value={date} onChange={(event) => setDate(event.target.value)} className="w-full px-3 py-3 rounded-xl border border-slate-300 text-sm font-semibold" />
+                <label className="text-sm font-bold text-slate-700 space-y-1.5">Payment time
+                  <input type="datetime-local" required value={date} onChange={(event) => setDate(event.target.value)} className="w-full px-3 py-3 rounded-xl border border-slate-300 text-sm font-semibold" />
                 </label>
               </div>
 

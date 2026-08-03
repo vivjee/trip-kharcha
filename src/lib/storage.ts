@@ -1,4 +1,5 @@
 import { Trip, UserProfile } from '@/types/trip';
+import { toLocalDateTimeInput } from '@/lib/date-utils';
 
 const LOCAL_STORAGE_KEY = 'trip_calculator_data_v4_clean_slate';
 const LEGACY_STORAGE_KEYS = ['trip_calculator_data_v3', 'trip_calculator_data_v2', 'trip_calculator_data_v1'];
@@ -22,12 +23,14 @@ function migrateTrip(trip: Trip): Trip {
     participants: Array.isArray(trip.participants) ? trip.participants : [],
     expenses: (trip.expenses || []).map((expense) => ({
       ...expense,
+      date: toLocalDateTimeInput(expense.date, expense.createdAt || createdAt),
       splitMode: expense.splitMode || 'equal',
       createdAt: expense.createdAt || createdAt,
       updatedAt: expense.updatedAt || expense.createdAt || createdAt,
     })),
     settlements: (trip.settlements || []).map((settlement) => ({
       ...settlement,
+      date: toLocalDateTimeInput(settlement.date, settlement.createdAt || createdAt),
       createdAt: settlement.createdAt || createdAt,
       updatedAt: settlement.updatedAt || settlement.createdAt || createdAt,
     })),

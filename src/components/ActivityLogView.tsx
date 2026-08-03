@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Trip, AuditLogEntry } from '@/types/trip';
 import { History, PlusCircle, Trash2, CheckCircle2, UserCheck, Sparkles, Filter, PencilLine, UserMinus, UserPlus } from 'lucide-react';
 import Avatar from '@/components/Avatar';
+import { formatDateTime } from '@/lib/date-utils';
 
 interface ActivityLogViewProps {
   trip: Trip;
@@ -46,15 +47,6 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
         return { label: 'Edited Trip', bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: PencilLine };
       default:
         return { label: 'Trip Action', bg: 'bg-slate-100 text-slate-700 border-slate-200', icon: History };
-    }
-  };
-
-  const formatLogTime = (isoString: string) => {
-    try {
-      const d = new Date(isoString);
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' });
-    } catch {
-      return isoString;
     }
   };
 
@@ -121,7 +113,7 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
                     <div>
                       <span className="text-xs font-black text-slate-900">{log.performedBy.name}</span>
                       <span className="text-[10px] text-slate-400 ml-1.5 font-semibold">
-                        {formatLogTime(log.timestamp)}
+                        {formatDateTime(log.timestamp)}
                       </span>
                     </div>
                   </div>

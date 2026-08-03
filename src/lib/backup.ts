@@ -2,6 +2,7 @@
 
 import { blobToDataUrl, loadStoredPhoto, storeDataUrlPhoto, type PhotoKind } from '@/lib/image-storage';
 import { Trip } from '@/types/trip';
+import { toLocalDateTimeInput } from '@/lib/date-utils';
 
 interface BackupPhoto {
   kind: PhotoKind;
@@ -65,6 +66,14 @@ export async function importTripBackup(file: File): Promise<Trip> {
     participants: trip.participants.map((participant) => ({
       ...participant,
       photoId: participant.photoId ? mappedPhotoIds.get(participant.photoId) : undefined,
+    })),
+    expenses: trip.expenses.map((expense) => ({
+      ...expense,
+      date: toLocalDateTimeInput(expense.date, expense.createdAt),
+    })),
+    settlements: trip.settlements.map((settlement) => ({
+      ...settlement,
+      date: toLocalDateTimeInput(settlement.date, settlement.createdAt),
     })),
     createdAt: now,
     updatedAt: now,
