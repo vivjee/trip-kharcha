@@ -120,7 +120,7 @@ export default function ExpensesView({
                         <h3 className="text-sm font-bold text-slate-900 leading-tight">
                           {expense.title}
                         </h3>
-                        <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-1">
+                        <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
                           <span className="flex items-center gap-0.5">
                             <Calendar className="w-3 h-3 text-slate-400" />
                             {formatDateTime(toLocalDateTimeInput(expense.date, expense.createdAt))}
@@ -137,7 +137,7 @@ export default function ExpensesView({
                       <p className="text-sm font-black text-slate-900">
                         {trip.currencySymbol} {expense.amount.toLocaleString()}
                       </p>
-                      <p className="text-[10px] font-semibold text-indigo-600 mt-0.5">
+                      <p className="mt-0.5 text-xs font-semibold text-indigo-600">
                         {trip.currencySymbol} {Math.round(perPerson).toLocaleString()} / person
                       </p>
                     </div>
@@ -169,7 +169,7 @@ export default function ExpensesView({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="flex items-center gap-1 text-[10px] text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-full">
+                      <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500">
                         <Users className="w-3 h-3" />
                         {expense.includedParticipantIds.length} members
                       </span>

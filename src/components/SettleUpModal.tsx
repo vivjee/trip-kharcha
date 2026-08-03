@@ -98,7 +98,7 @@ function SettlementForm({ trip, presetDebt, settlement, onClose, onSaveSettlemen
                 <div className="text-center flex-1"><span className="text-3xl">{to?.avatar || '👤'}</span><p className="text-sm font-extrabold text-slate-900 mt-1">{to?.name || 'Receiver'}</p><span className="text-xs text-emerald-600 font-semibold">receives</span></div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="text-sm font-bold text-slate-700 space-y-1.5">Who is paying?
                   <select value={fromId} onChange={(event) => changeFrom(event.target.value)} className="w-full px-3 py-3 rounded-xl border border-slate-300 text-sm font-bold bg-white">
                     {[...new Map(debts.map((debt) => [debt.from.id, debt.from])).values()].map((participant) => <option key={participant.id} value={participant.id}>{participant.avatar} {participant.name}</option>)}
@@ -111,9 +111,9 @@ function SettlementForm({ trip, presetDebt, settlement, onClose, onSaveSettlemen
                 </label>
               </div>
 
-              <div className="grid grid-cols-[1fr_140px] gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_180px]">
                 <label className="text-sm font-bold text-slate-700 space-y-1.5">Payment amount
-                  <div className="relative"><span className="absolute left-3.5 top-3 text-emerald-700 font-black">{trip.currencySymbol}</span><input type="number" inputMode="decimal" min="0.01" max={maxAmount || undefined} step="0.01" required value={amountStr} onChange={(event) => setAmountStr(event.target.value)} className="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-300 text-base font-black" /></div>
+                  <div className="relative"><span className="absolute left-3.5 top-3.5 text-emerald-700 font-black">{trip.currencySymbol}</span><input type="number" inputMode="decimal" min="0.01" max={maxAmount || undefined} step="0.01" required value={amountStr} onChange={(event) => setAmountStr(event.target.value)} className="min-h-12 w-full rounded-xl border border-slate-300 pl-9 pr-3 text-xl font-black text-slate-950" /></div>
                   <span className="block text-xs font-medium text-slate-500">Outstanding: {trip.currencySymbol} {maxAmount.toLocaleString()}</span>
                   {amount > maxAmount && <span className="block text-xs font-semibold text-rose-600">Amount cannot exceed the outstanding balance.</span>}
                 </label>

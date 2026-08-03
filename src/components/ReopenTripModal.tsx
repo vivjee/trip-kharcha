@@ -24,10 +24,10 @@ export default function ReopenTripModal({ trip, isOpen, onClose, onConfirm }: Re
             </div>
             <div>
               <h2 id="reopen-trip-title" className="text-sm font-black text-slate-950">Reopen {trip.name}?</h2>
-              <p className="text-[10px] font-semibold text-amber-800">This changes the trip back to Active</p>
+              <p className="text-xs font-semibold text-amber-800">This changes the trip back to Active</p>
             </div>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close reopen warning" className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-600 shadow-2xs cursor-pointer">
+          <button type="button" onClick={onClose} aria-label="Close reopen warning" className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-slate-600 shadow-2xs cursor-pointer">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -36,12 +36,12 @@ export default function ReopenTripModal({ trip, isOpen, onClose, onConfirm }: Re
           <p className="text-xs font-medium leading-relaxed text-slate-600">
             The completed recap will switch back to the live trip dashboard. You’ll be able to add expenses and manage members again, and the saved end date will be cleared.
           </p>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-[11px] font-semibold text-slate-600">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs font-semibold text-slate-600">
             Your expenses, settlements, cover photo, and trip history will stay unchanged.
           </div>
           <div className="flex gap-3 pt-1">
-            <button type="button" onClick={onClose} className="min-h-12 w-2/5 rounded-xl border border-slate-300 text-xs font-black text-slate-700 cursor-pointer">Keep Done</button>
-            <button type="button" onClick={onConfirm} className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 text-xs font-black text-white shadow-md cursor-pointer">
+            <button type="button" onClick={onClose} className="min-h-12 w-2/5 rounded-xl border border-slate-300 text-sm font-black text-slate-700 cursor-pointer">Keep done</button>
+            <button type="button" onClick={onConfirm} className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 text-sm font-black text-white cursor-pointer">
               <RotateCcw className="h-4 w-4" /> Reopen Trip
             </button>
           </div>

@@ -107,7 +107,7 @@ export default function BalancesView({
               Who Owes Whom ({simplifiedDebts.length})
             </h3>
           </div>
-          <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+          <span className="rounded-full bg-indigo-50 px-2 py-1 text-xs font-bold text-indigo-700">
             Min Cash-Flow
           </span>
         </div>
@@ -171,7 +171,7 @@ export default function BalancesView({
                   <Avatar person={{ name: b.participantName, avatar: b.avatar, photoId: b.photoId }} size="sm" />
                   <div>
                     <p className="text-xs font-bold text-slate-900">{b.participantName}</p>
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-xs text-slate-500">
                       Paid: {trip.currencySymbol}{b.totalPaid.toLocaleString()} • Share: {trip.currencySymbol}{b.totalOwed.toLocaleString()}
                     </p>
                   </div>

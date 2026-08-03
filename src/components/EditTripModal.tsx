@@ -47,14 +47,14 @@ export default function EditTripModal({ trip, isOpen, onClose, onSave }: EditTri
             </div>
             <div>
               <h2 id="edit-trip-title" className="text-sm font-bold text-slate-900">Edit Trip Details</h2>
-              <p className="text-[10px] text-slate-500 font-medium">The cover photo can be changed from the dashboard</p>
+              <p className="text-xs text-slate-500 font-medium">Change the cover photo from the overview</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close trip editor"
-            className="w-8 h-8 rounded-full bg-slate-200/60 flex items-center justify-center text-slate-600 hover:bg-slate-300 cursor-pointer"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -69,7 +69,7 @@ export default function EditTripModal({ trip, isOpen, onClose, onSave }: EditTri
               onChange={(event) => setName(event.target.value)}
               maxLength={60}
               required
-              className="w-full px-3.5 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-slate-900 bg-white"
+              className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -82,7 +82,7 @@ export default function EditTripModal({ trip, isOpen, onClose, onSave }: EditTri
               maxLength={160}
               rows={3}
               placeholder="What is this trip about?"
-              className="w-full resize-none px-3.5 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-xs font-semibold text-slate-900 bg-white"
+              className="min-h-24 w-full resize-none rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-indigo-500"
             />
             <p className="mt-1 text-right text-[10px] font-semibold text-slate-400">{description.length}/160</p>
           </div>
@@ -98,7 +98,7 @@ export default function EditTripModal({ trip, isOpen, onClose, onSave }: EditTri
                 max={trip.endDate}
                 onChange={(event) => setStartDate(event.target.value)}
                 required
-                className="w-full pl-10 pr-3.5 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-xs font-bold text-slate-900 bg-white"
+                className="min-h-12 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3.5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             {trip.endDate && startDate > trip.endDate && (
@@ -110,14 +110,14 @@ export default function EditTripModal({ trip, isOpen, onClose, onSave }: EditTri
             <button
               type="button"
               onClick={onClose}
-              className="w-1/3 min-h-11 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 cursor-pointer"
+              className="min-h-12 w-1/3 rounded-xl border border-slate-300 text-sm font-bold text-slate-700 hover:bg-slate-100 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!isValid}
-              className="w-2/3 min-h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all active:scale-[.98] cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+              className="flex min-h-12 w-2/3 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 text-sm font-bold text-white hover:bg-indigo-700 cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4" />
               Save Details

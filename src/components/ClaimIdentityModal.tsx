@@ -44,12 +44,13 @@ export default function ClaimIdentityModal({
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-900">Who Are You On This Trip?</h2>
-              <p className="text-[10px] text-slate-500 font-medium">Claim your participant identity for audit trail</p>
+              <p className="text-xs text-slate-500 font-medium">Claim your participant identity for the activity log</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full bg-slate-200/60 flex items-center justify-center text-slate-600 hover:bg-slate-300 transition-colors cursor-pointer"
+            aria-label="Close identity picker"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -83,7 +84,7 @@ export default function ClaimIdentityModal({
                       <p className="text-xs font-black text-slate-900 flex items-center gap-1.5">
                         <span>{p.name}</span>
                         {isCurrentActive && (
-                          <span className="bg-purple-100 text-purple-800 text-[9px] font-extrabold px-2 py-0.2 rounded-full">
+                          <span className="rounded-full bg-purple-100 px-2 py-1 text-xs font-extrabold text-purple-800">
                             Current Device
                           </span>
                         )}
@@ -106,14 +107,14 @@ export default function ClaimIdentityModal({
             <button
               type="button"
               onClick={onClose}
-              className="w-1/3 py-3 rounded-2xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 cursor-pointer"
+              className="min-h-12 w-1/3 rounded-xl border border-slate-300 text-sm font-bold text-slate-700 hover:bg-slate-100 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleConfirm}
-              className="w-2/3 py-3 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+              className="flex min-h-12 w-2/3 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 text-sm font-extrabold text-white hover:bg-indigo-700 cursor-pointer"
             >
               <UserCheck className="w-4 h-4" />
               Claim &quot;{selectedParticipant?.name}&quot; Profile

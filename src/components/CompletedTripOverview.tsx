@@ -125,7 +125,7 @@ export default function CompletedTripOverview({
         <motion.section variants={itemVariants} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-indigo-600">The money story</p>
+              <p className="text-xs font-black text-indigo-600">The money story</p>
               <h2 className="mt-0.5 text-base font-black text-slate-950">Where it all went</h2>
             </div>
             <AppButton type="button" onClick={() => onNavigateTab('analytics')} variant="ghost" size="compact">
@@ -136,9 +136,9 @@ export default function CompletedTripOverview({
           <div className="grid grid-cols-[112px_1fr] items-center gap-4">
             <div className="relative mx-auto h-28 w-28 rounded-full" style={{ background: categoryGradient }} role="img" aria-label={`Donut chart. ${recap.categories.map((category) => `${category.label} ${category.percentage.toFixed(0)} percent`).join(', ')}`}>
               <div className="absolute inset-[16px] flex flex-col items-center justify-center rounded-full bg-white text-center shadow-inner">
-                <span className="text-[9px] font-black uppercase text-slate-400">Top</span>
+                <span className="text-xs font-black text-slate-500">Top</span>
                 <span className="text-xl" aria-hidden="true">{recap.dominantCategory?.icon}</span>
-                <span className="max-w-[64px] truncate text-[10px] font-black text-slate-800">{recap.dominantCategory?.label}</span>
+                <span className="max-w-[64px] truncate text-xs font-black text-slate-800">{recap.dominantCategory?.label}</span>
               </div>
             </div>
 
@@ -151,7 +151,7 @@ export default function CompletedTripOverview({
                   </div>
                   <div className="text-right">
                     <p className="font-black text-slate-950">{category.percentage.toFixed(0)}%</p>
-                    <p className="text-[9px] font-bold text-slate-400">{trip.currencySymbol}{category.amount.toLocaleString()}</p>
+                    <p className="text-xs font-bold text-slate-500">{trip.currencySymbol}{category.amount.toLocaleString()}</p>
                   </div>
                 </div>
               ))}
@@ -164,13 +164,13 @@ export default function CompletedTripOverview({
         <motion.section variants={itemVariants} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
           <div className="mb-4 flex items-start justify-between">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-600">Spending rhythm</p>
+              <p className="text-xs font-black text-emerald-600">Spending rhythm</p>
               <h2 className="mt-0.5 text-base font-black text-slate-950">Day by day</h2>
             </div>
             {recap.highestSpendDay && (
               <div className="rounded-xl bg-emerald-50 px-2.5 py-1.5 text-right">
-                <p className="text-[8px] font-black uppercase text-emerald-600">Peak day</p>
-                <p className="text-[10px] font-black text-emerald-950">{recap.highestSpendDay.label}</p>
+                <p className="text-xs font-black text-emerald-600">Peak day</p>
+                <p className="text-xs font-black text-emerald-950">{recap.highestSpendDay.label}</p>
               </div>
             )}
           </div>
@@ -181,11 +181,11 @@ export default function CompletedTripOverview({
                 const height = Math.max(12, (day.amount / maxDaySpend) * 100);
                 return (
                   <div key={day.date} className="flex min-w-[42px] flex-1 flex-col items-center justify-end gap-1.5" title={`${day.label}: ${trip.currencySymbol} ${day.amount.toLocaleString()}`}>
-                    <p className="text-[9px] font-black text-slate-600">{trip.currencySymbol}{day.amount.toLocaleString()}</p>
+                    <p className="text-xs font-black text-slate-600">{trip.currencySymbol}{day.amount.toLocaleString()}</p>
                     <div className="flex h-24 w-full items-end rounded-xl bg-slate-100 p-1">
                       <motion.div initial={{ height: 0 }} animate={{ height: `${height}%` }} transition={{ duration: 0.65, delay: 0.18 }} className="w-full rounded-lg bg-gradient-to-t from-emerald-600 to-teal-400" />
                     </div>
-                    <p className="whitespace-nowrap text-[9px] font-extrabold text-slate-500">{day.shortLabel}</p>
+                    <p className="whitespace-nowrap text-xs font-extrabold text-slate-500">{day.shortLabel}</p>
                   </div>
                 );
               })}
@@ -197,10 +197,10 @@ export default function CompletedTripOverview({
       <motion.section variants={itemVariants} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-600">The crew</p>
+            <p className="text-xs font-black text-violet-600">The crew</p>
             <h2 className="mt-0.5 text-base font-black text-slate-950">Who covered the trip</h2>
           </div>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-black text-slate-500">{trip.participants.length} people</span>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-500">{trip.participants.length} people</span>
         </div>
         <div className="space-y-3">
           {balances.map((balance, index) => (
@@ -227,9 +227,9 @@ export default function CompletedTripOverview({
             {simplifiedDebts.length === 0 ? <CheckCircle2 className="h-5 w-5" /> : <WalletCards className="h-5 w-5" />}
           </div>
           <div className="min-w-0 flex-1">
-            <p className={`text-[10px] font-black uppercase tracking-[0.16em] ${simplifiedDebts.length === 0 ? 'text-emerald-700' : 'text-amber-700'}`}>Settlement close</p>
+            <p className={`text-xs font-black ${simplifiedDebts.length === 0 ? 'text-emerald-700' : 'text-amber-700'}`}>Settlement close</p>
             <h2 className="mt-0.5 text-base font-black text-slate-950">{simplifiedDebts.length === 0 ? 'Everyone is settled' : `${simplifiedDebts.length} payment${simplifiedDebts.length === 1 ? '' : 's'} still open`}</h2>
-            <p className="mt-1 text-[11px] font-medium leading-relaxed text-slate-600">
+            <p className="mt-1 text-xs font-medium leading-relaxed text-slate-600">
               {simplifiedDebts.length === 0
                 ? 'The books are closed. Keep this recap as the final memory of the trip.'
                 : `${settlement.percentage}% settled so far · ${trip.currencySymbol} ${settlement.pending.toLocaleString()} remains to be paid.`}
@@ -255,7 +255,7 @@ export default function CompletedTripOverview({
         </AppButton>
       </motion.div>
 
-      <motion.p variants={itemVariants} className="flex items-center justify-center gap-1.5 pb-1 text-center text-[10px] font-bold text-slate-400">
+      <motion.p variants={itemVariants} className="flex items-center justify-center gap-1.5 pb-1 text-center text-xs font-bold text-slate-500">
         <Sparkles className="h-3.5 w-3.5 text-amber-400" /> Tap “Done” in the header if you need to reopen this trip.
       </motion.p>
     </motion.div>

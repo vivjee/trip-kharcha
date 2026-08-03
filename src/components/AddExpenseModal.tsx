@@ -184,7 +184,7 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
           <section className="rounded-3xl border border-slate-700 bg-slate-950 px-5 py-4 shadow-lg shadow-slate-900/15" aria-labelledby="total-amount-label">
             <div className="flex items-center justify-between">
               <span id="total-amount-label" className="text-xs font-extrabold uppercase tracking-[0.16em] text-slate-300">Total amount</span>
-              <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold text-slate-300">{trip.currency}</span>
+              <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold text-slate-300">{trip.currency}</span>
             </div>
             {!isMultiPayer ? (
               <label className="mt-2 flex items-center gap-3">
@@ -210,7 +210,7 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
                 <span className="text-right text-4xl font-black tracking-tight text-white">{payerTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
               </div>
             )}
-            <p className="mt-2 text-right text-[11px] font-semibold text-slate-400">
+            <p className="mt-2 text-right text-xs font-semibold text-slate-400">
               {isMultiPayer ? 'Calculated from everyone’s payments below' : 'Enter the full expense before choosing the split'}
             </p>
           </section>
@@ -218,11 +218,11 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_190px] gap-3">
             <label className="space-y-1.5 text-sm font-bold text-slate-700">
               Expense title
-              <input type="text" placeholder={`Defaults to ${selectedCategory?.label}`} value={title} onChange={(event) => setTitle(event.target.value)} className="w-full px-3.5 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm font-medium text-slate-900 bg-white" />
+              <input type="text" placeholder={`Defaults to ${selectedCategory?.label}`} value={title} onChange={(event) => setTitle(event.target.value)} className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-indigo-500" />
             </label>
             <label className="space-y-1.5 text-sm font-bold text-slate-700">
               Date & time
-              <input type="datetime-local" required value={date} onChange={(event) => setDate(event.target.value)} className="w-full px-3 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm font-semibold text-slate-900 bg-white" />
+              <input type="datetime-local" required value={date} onChange={(event) => setDate(event.target.value)} className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-indigo-500" />
             </label>
           </div>
 
@@ -232,7 +232,7 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
               {categories.map((item) => {
                 const Icon = item.icon;
                 const selected = category === item.id;
-                return <button type="button" key={item.id} aria-pressed={selected} onClick={() => setCategory(item.id)} className={`min-h-11 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-xs font-bold border cursor-pointer ${selected ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}`}><Icon className="w-4 h-4" />{item.label}</button>;
+                return <button type="button" key={item.id} aria-pressed={selected} onClick={() => setCategory(item.id)} className={`min-h-11 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-xs font-bold border cursor-pointer ${selected ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}`}><Icon className="w-4 h-4" />{item.label}</button>;
               })}
             </div>
           </fieldset>
@@ -241,8 +241,8 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
             <div className="flex items-center justify-between gap-3">
               <h3 id="payer-heading" className="text-sm font-bold text-slate-800">Who paid?</h3>
               <div className="flex bg-slate-200 p-1 rounded-xl text-xs font-bold">
-                <button type="button" onClick={() => setIsMultiPayer(false)} className={`px-3 py-1.5 rounded-lg cursor-pointer ${!isMultiPayer ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600'}`}>One person</button>
-                <button type="button" onClick={() => setIsMultiPayer(true)} className={`px-3 py-1.5 rounded-lg cursor-pointer ${isMultiPayer ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600'}`}>Multiple</button>
+                <button type="button" onClick={() => setIsMultiPayer(false)} className={`min-h-10 rounded-lg px-3 cursor-pointer ${!isMultiPayer ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600'}`}>One person</button>
+                <button type="button" onClick={() => setIsMultiPayer(true)} className={`min-h-10 rounded-lg px-3 cursor-pointer ${isMultiPayer ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600'}`}>Multiple</button>
               </div>
             </div>
 
@@ -273,7 +273,7 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
 
             {splitMode === 'equal' ? (
               <div className="space-y-2">
-                <button type="button" onClick={() => setIncludedIds(trip.participants.map((participant) => participant.id))} className="text-xs font-bold text-indigo-700 cursor-pointer">Select everyone</button>
+                <button type="button" onClick={() => setIncludedIds(trip.participants.map((participant) => participant.id))} className="min-h-10 rounded-lg px-2 text-xs font-bold text-indigo-700 hover:bg-indigo-100 cursor-pointer">Select everyone</button>
                 {trip.participants.map((participant) => {
                   const included = includedIds.includes(participant.id);
                   return <button type="button" key={participant.id} aria-pressed={included} onClick={() => setIncludedIds(included ? includedIds.filter((id) => id !== participant.id) : [...includedIds, participant.id])} className={`w-full min-h-11 flex items-center justify-between px-3 rounded-xl border text-sm font-bold cursor-pointer ${included ? 'bg-white border-indigo-300 text-slate-900' : 'bg-slate-100 border-slate-200 text-slate-500'}`}><span className="flex items-center gap-2"><span className={`w-5 h-5 rounded-md flex items-center justify-center ${included ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-300'}`}>{included && <Check className="w-3.5 h-3.5" />}</span>{participant.avatar} {participant.name}</span>{included && amount > 0 && <span className="text-indigo-700">{trip.currencySymbol} {(amount / includedIds.length).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>}</button>;

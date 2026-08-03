@@ -89,7 +89,7 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
         <div className="bg-white p-8 rounded-3xl border border-slate-200 text-center space-y-2">
           <Sparkles className="w-8 h-8 text-indigo-400 mx-auto" />
           <p className="text-xs font-bold text-slate-700">No activity logged yet</p>
-          <p className="text-[10px] text-slate-400">
+          <p className="text-xs text-slate-500">
             Actions like adding expenses, settlements, or member changes will appear here chronologically.
           </p>
         </div>
@@ -109,13 +109,13 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
                     <Avatar person={log.performedBy} size="xs" />
                     <div>
                       <span className="text-xs font-black text-slate-900">{log.performedBy.name}</span>
-                      <span className="text-[10px] text-slate-400 ml-1.5 font-semibold">
+                      <span className="ml-1.5 text-xs font-semibold text-slate-500">
                         {formatDateTime(log.timestamp)}
                       </span>
                     </div>
                   </div>
 
-                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border flex items-center gap-1 ${badge.bg}`}>
+                  <span className={`flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-extrabold ${badge.bg}`}>
                     <Icon className="w-3 h-3" />
                     {badge.label}
                   </span>

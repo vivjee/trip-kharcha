@@ -46,19 +46,20 @@ export default function CompleteTripModal({
     <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4 animate-pop-in">
       <div className="w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-indigo-900 to-purple-900 text-white">
+        <div className="flex items-center justify-between border-b border-indigo-900 bg-indigo-950 px-5 py-4 text-white">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center font-bold">
               <Flag className="w-4 h-4 text-amber-300" />
             </div>
             <div>
               <h2 className="text-sm font-black leading-tight">Complete {trip.name}</h2>
-              <p className="text-[10px] text-indigo-200 font-medium">Finalize trip & record end date</p>
+              <p className="text-xs text-indigo-200 font-medium">Finalize trip and record the end date</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors cursor-pointer"
+            aria-label="Close completion form"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-white hover:bg-white/20 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -67,30 +68,30 @@ export default function CompleteTripModal({
         {/* Modal Content */}
         <div className="p-5 space-y-4 overflow-y-auto no-scrollbar">
           {/* Summary Spotlight Card */}
-          <div className="bg-gradient-to-br from-slate-50 to-indigo-50/50 p-4 rounded-2xl border border-slate-200 space-y-3">
+          <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-indigo-600" />
                 Trip Expenditure Summary
               </span>
-              <span className="text-[10px] font-extrabold bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
+              <span className="rounded-full bg-indigo-100 px-2 py-1 text-xs font-extrabold text-indigo-800">
                 {stats.totalExpensesCount} Expenses Logged
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-2.5 pt-1">
               <div className="bg-white p-2.5 rounded-xl border border-slate-200/80">
-                <span className="text-[9px] font-extrabold uppercase text-slate-400">Total Expenditure</span>
+                <span className="text-xs font-bold text-slate-500">Total spent</span>
                 <p className="text-sm font-black text-slate-900 mt-0.5">
                   {trip.currencySymbol} {stats.totalSpent.toLocaleString()}
                 </p>
               </div>
 
               <div className="bg-white p-2.5 rounded-xl border border-slate-200/80">
-                <span className="text-[9px] font-extrabold uppercase text-slate-400">Top Spender</span>
+                <span className="text-xs font-bold text-slate-500">Top payer</span>
                 <p className="text-xs font-extrabold text-slate-900 mt-0.5 flex items-center gap-1 truncate">
                   <span>{stats.topSpender?.avatar}</span>
-                  <span className="truncate">{stats.topSpender?.participantName}</span>
+                  <span className="truncate">{stats.totalSpent > 0 ? stats.topSpender?.participantName : 'No spending yet'}</span>
                 </p>
               </div>
             </div>
@@ -104,7 +105,7 @@ export default function CompleteTripModal({
                 <p className="text-xs font-bold text-amber-900">
                   {simplifiedDebts.length} Unsettled Payments Remaining
                 </p>
-                <p className="text-[11px] text-amber-700 mt-0.5 font-medium">
+                <p className="mt-0.5 text-xs font-medium text-amber-700">
                   You can mark the trip complete now and settle payments anytime later in the Balances tab.
                 </p>
               </div>
@@ -123,9 +124,9 @@ export default function CompleteTripModal({
                 <Calendar className="w-4 h-4 text-indigo-600" />
                 Select Trip End Date
               </label>
-              <span className="text-[10px] font-bold text-slate-400">Defaults to Today</span>
+              <span className="text-xs font-bold text-slate-500">Defaults to today</span>
             </div>
-            <p className="text-[10px] text-slate-500 font-medium">
+            <p className="text-xs font-medium text-slate-500">
               If your trip ended on a previous date, adjust the date below:
             </p>
             <input
@@ -133,7 +134,7 @@ export default function CompleteTripModal({
               required
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-xs font-bold text-slate-900 bg-white cursor-pointer"
+              className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
             />
           </div>
 
@@ -142,14 +143,14 @@ export default function CompleteTripModal({
             <button
               type="button"
               onClick={onClose}
-              className="w-1/3 py-3 rounded-2xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer"
+              className="min-h-12 w-1/3 rounded-xl border border-slate-300 text-sm font-bold text-slate-700 hover:bg-slate-100 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleComplete}
-              className="w-2/3 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+              className="flex min-h-12 w-2/3 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 text-sm font-extrabold text-white hover:bg-indigo-700 cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
               Complete Trip 🏁

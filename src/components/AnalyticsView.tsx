@@ -108,7 +108,7 @@ export default function AnalyticsView({ trip }: AnalyticsViewProps) {
           <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
             Spending by Category
           </h3>
-          <span className="text-[10px] text-slate-400 font-medium">
+          <span className="text-xs font-medium text-slate-500">
             {categoriesSorted.length} Categories
           </span>
         </div>
@@ -145,7 +145,7 @@ export default function AnalyticsView({ trip }: AnalyticsViewProps) {
                       <span className="font-bold text-slate-800">{categoryIcons[cat] || cat}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-semibold text-slate-400">
+                      <span className="text-xs font-semibold text-slate-500">
                         {pct.toFixed(1)}%
                       </span>
                       <span className="font-extrabold text-slate-900">
