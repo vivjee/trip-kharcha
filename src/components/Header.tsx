@@ -16,6 +16,8 @@ interface HeaderProps {
   onOpenNewTripModal: () => void;
   onOpenEditTripModal: () => void;
   onOpenAddExpense: () => void;
+  onOpenAddParticipant: () => void;
+  onOpenActivity: () => void;
   onToggleTripStatus: () => void;
   onOpenShareModal: () => void;
   onOpenSyncModal: () => void;
@@ -31,6 +33,8 @@ export default function Header({
   onOpenNewTripModal,
   onOpenEditTripModal,
   onOpenAddExpense,
+  onOpenAddParticipant,
+  onOpenActivity,
   onToggleTripStatus,
   onOpenShareModal,
   onOpenSyncModal,
@@ -192,6 +196,8 @@ export default function Header({
         onClose={() => setIsActionsOpen(false)}
         onOpenNewTripModal={onOpenNewTripModal}
         onOpenEditTripModal={onOpenEditTripModal}
+        onOpenAddParticipant={onOpenAddParticipant}
+        onOpenActivity={onOpenActivity}
         onOpenShareModal={onOpenShareModal}
         onOpenSyncModal={onOpenSyncModal}
         onOpenTripsHub={onCloseTrip}

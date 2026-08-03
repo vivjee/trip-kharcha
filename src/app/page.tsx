@@ -63,6 +63,7 @@ export default function Home() {
   const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isClaimIdentityOpen, setIsClaimIdentityOpen] = useState(false);
+  const [isActivityOpen, setIsActivityOpen] = useState(false);
   const [currentParticipantId, setCurrentParticipantId] = useState<string>('');
   const [presetDebt, setPresetDebt] = useState<SimplifiedDebt | undefined>(undefined);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | undefined>(undefined);
@@ -529,6 +530,8 @@ export default function Home() {
           setExpenseToEdit(undefined);
           setIsAddExpenseOpen(true);
         }}
+        onOpenAddParticipant={() => setIsAddParticipantOpen(true)}
+        onOpenActivity={() => setIsActivityOpen(true)}
         onToggleTripStatus={handleToggleTripStatus}
         onOpenShareModal={() => setIsShareModalOpen(true)}
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
@@ -618,17 +621,6 @@ export default function Home() {
             </motion.div>
           )}
 
-          {activeTab === 'activity' && (
-            <motion.div
-              key="activity"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ActivityLogView trip={currentTrip} />
-            </motion.div>
-          )}
         </AnimatePresence>
       </main>
 
@@ -638,6 +630,8 @@ export default function Home() {
         setActiveTab={setActiveTab}
         pendingDebtsCount={simplifiedDebts.length}
       />
+
+      <ActivityLogView trip={currentTrip} isOpen={isActivityOpen} onClose={() => setIsActivityOpen(false)} />
 
       {/* Modals */}
       <AddExpenseModal
