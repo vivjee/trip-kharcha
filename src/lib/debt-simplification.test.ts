@@ -71,3 +71,70 @@ test('settlements change net balances without corrupting expense totals', () => 
   assert.equal(getTripStats(trip).topSpender?.participantId, 'a');
   assert.deepEqual(getSettlementProgress(trip), { recorded: 30, pending: 30, percentage: 50 });
 });
+
+test('rounding residue is absorbed before settling two outstanding payments', () => {
+  const expense: Expense = {
+    id: 'e-rounding',
+    title: 'Shared dinner',
+    amount: 100,
+    paidById: 'a',
+    includedParticipantIds: ['a', 'b', 'c'],
+    splitMode: 'exact',
+    // These valid high-precision inputs used to be saved as 99.99 after each
+    // line was rounded independently, leaving an artificial minor-unit debt.
+    shares: [
+      { participantId: 'a', amount: 33.333 },
+      { participantId: 'b', amount: 33.333 },
+      { participantId: 'c', amount: 33.334 },
+    ],
+    category: 'food',
+    date: '2026-08-01',
+  };
+
+  const trip = makeTrip([expense]);
+  assert.deepEqual(getExpenseShares(expense).map((share) => share.amount), [33.33, 33.33, 33.34]);
+  assert.equal(calculateParticipantBalances(trip).reduce((sum, balance) => sum + balance.netBalance, 0), 0);
+
+  const initialDebts = calculateSimplifiedDebts(trip);
+  assert.deepEqual(initialDebts.map((debt) => [debt.from.id, debt.to.id, debt.amount]), [
+    ['c', 'a', 33.34],
+    ['b', 'a', 33.33],
+  ]);
+
+  const afterFirst = makeTrip([expense], [{
+    id: 's1',
+    fromParticipantId: initialDebts[0].from.id,
+    toParticipantId: initialDebts[0].to.id,
+    amount: initialDebts[0].amount,
+    date: '2026-08-01',
+  }]);
+  assert.deepEqual(calculateSimplifiedDebts(afterFirst).map((debt) => [debt.from.id, debt.to.id, debt.amount]), [
+    ['b', 'a', 33.33],
+  ]);
+
+  const fullySettled = makeTrip([expense], [
+    ...afterFirst.settlements,
+    { id: 's2', fromParticipantId: 'b', toParticipantId: 'a', amount: 33.33, date: '2026-08-01' },
+  ]);
+  assert.deepEqual(calculateSimplifiedDebts(fullySettled), []);
+  assert.equal(getSettlementProgress(fullySettled).pending, 0);
+});
+
+test('multi-payer rounding remains conserved in minor units', () => {
+  const expense: Expense = {
+    id: 'e-payers',
+    title: 'Tickets',
+    amount: 100,
+    paidById: 'a',
+    payers: [
+      { participantId: 'a', amount: 50.005 },
+      { participantId: 'b', amount: 49.995 },
+    ],
+    includedParticipantIds: ['a', 'b'],
+    category: 'activity',
+    date: '2026-08-01',
+  };
+  const balances = calculateParticipantBalances(makeTrip([expense]));
+  assert.equal(balances.reduce((sum, balance) => sum + balance.totalPaid, 0), 100);
+  assert.equal(balances.reduce((sum, balance) => sum + balance.netBalance, 0), 0);
+});

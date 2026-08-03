@@ -92,10 +92,15 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
 
     const positiveEntries = Object.entries(splitInputs).filter(([, value]) => Number(value) > 0);
     if (splitMode === 'exact') {
-      return positiveEntries.map(([participantId, value]) => ({
-        participantId,
-        amount: Math.round(Number(value) * 100) / 100,
-      }));
+      const totalMinor = Math.round(amount * 100);
+      let assignedMinor = 0;
+      return positiveEntries.map(([participantId, value], index) => {
+        const amountMinor = index === positiveEntries.length - 1
+          ? totalMinor - assignedMinor
+          : Math.round(Number(value) * 100);
+        assignedMinor += amountMinor;
+        return { participantId, amount: amountMinor / 100 };
+      });
     }
 
     let assigned = 0;
@@ -136,10 +141,17 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
     event.preventDefault();
     if (!isFormValid) return;
     const shares = buildShares();
+    const positivePayers = Object.entries(payerAmounts).filter(([, value]) => Number(value) > 0);
+    const payerTotalMinor = Math.round(amount * 100);
+    let assignedPayerMinor = 0;
     const payers: ExpensePayer[] | undefined = isMultiPayer
-      ? Object.entries(payerAmounts)
-          .filter(([, value]) => Number(value) > 0)
-          .map(([participantId, value]) => ({ participantId, amount: Math.round(Number(value) * 100) / 100 }))
+      ? positivePayers.map(([participantId, value], index) => {
+          const amountMinor = index === positivePayers.length - 1
+            ? payerTotalMinor - assignedPayerMinor
+            : Math.round(Number(value) * 100);
+          assignedPayerMinor += amountMinor;
+          return { participantId, amount: amountMinor / 100 };
+        })
       : undefined;
     const now = new Date().toISOString();
     onSaveExpense({
