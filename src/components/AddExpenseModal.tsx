@@ -287,7 +287,16 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
             )}
           </section>
 
-          <label className="block text-sm font-bold text-slate-700 space-y-1.5">Notes <span className="font-medium text-slate-400">(optional)</span><input type="text" placeholder="Location, bill reference…" value={notes} onChange={(event) => setNotes(event.target.value)} className="w-full px-3.5 py-3 rounded-xl border border-slate-300 text-sm font-medium text-slate-800 bg-white" /></label>
+          <label className="block space-y-1.5 text-sm font-bold text-slate-700">
+            Notes <span className="font-medium text-slate-400">(optional)</span>
+            <textarea
+              rows={3}
+              placeholder="Location, bill reference, or anything worth remembering…"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              className="min-h-24 w-full resize-y rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm font-medium leading-relaxed text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </label>
 
           <div className="sticky bottom-0 -mx-5 -mb-5 px-5 py-4 bg-white/95 backdrop-blur border-t border-slate-100 flex gap-3">
             <button type="button" onClick={onClose} className="w-1/3 min-h-12 rounded-xl border border-slate-300 text-slate-700 font-bold text-sm hover:bg-slate-100 cursor-pointer">Cancel</button>

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Trip, Expense } from '@/types/trip';
 import { Plus, Search, Trash2, Calendar, User, Users, Pencil } from 'lucide-react';
 import { formatDateTime, toLocalDateTimeInput } from '@/lib/date-utils';
+import AppButton from '@/components/AppButton';
 
 interface ExpensesViewProps {
   trip: Trip;
@@ -48,25 +49,22 @@ export default function ExpensesView({
             {trip.expenses.length} Total recorded items
           </p>
         </div>
-        <button
-          onClick={onOpenAddExpense}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
-        >
+        <AppButton onClick={onOpenAddExpense} size="large">
           <Plus className="w-4 h-4" />
-          <span>Add Expense</span>
-        </button>
+          <span>Add expense</span>
+        </AppButton>
       </div>
 
       {/* Search & Category Filter */}
       <div className="space-y-2">
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+          <Search className="absolute left-3.5 top-4 h-4 w-4 text-slate-400" />
           <input
             type="text"
             placeholder="Search expense title..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-800 shadow-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            className="min-h-12 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-4 text-sm font-medium text-slate-800 shadow-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
 
@@ -76,7 +74,7 @@ export default function ExpensesView({
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1 rounded-lg text-[11px] font-bold capitalize transition-all cursor-pointer whitespace-nowrap ${
+              className={`min-h-10 rounded-lg px-3 text-xs font-bold capitalize transition-colors cursor-pointer whitespace-nowrap ${
                 selectedCategory === cat
                   ? 'bg-slate-900 text-white shadow-xs'
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
@@ -119,7 +117,7 @@ export default function ExpensesView({
                         {categoryIcons[expense.category] || '🧾'}
                       </div>
                       <div>
-                        <h3 className="text-xs font-bold text-slate-900 leading-tight">
+                        <h3 className="text-sm font-bold text-slate-900 leading-tight">
                           {expense.title}
                         </h3>
                         <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-1">
@@ -144,6 +142,12 @@ export default function ExpensesView({
                       </p>
                     </div>
                   </div>
+
+                  {expense.notes && (
+                    <p className="line-clamp-2 whitespace-pre-line rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
+                      {expense.notes}
+                    </p>
+                  )}
 
                   {/* Details Footer: Who Paid & Included Badges */}
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
@@ -170,18 +174,20 @@ export default function ExpensesView({
                         {expense.includedParticipantIds.length} members
                       </span>
 
-                      <button onClick={() => onEditExpense(expense)} aria-label={`Edit ${expense.title}`} className="w-10 h-10 text-slate-500 hover:text-indigo-700 rounded-xl hover:bg-indigo-50 flex items-center justify-center cursor-pointer">
+                      <AppButton onClick={() => onEditExpense(expense)} size="icon" variant="ghost" aria-label={`Edit ${expense.title}`}>
                         <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
+                      </AppButton>
+                      <AppButton
                         onClick={() => {
                           if (window.confirm(`Delete “${expense.title}”? This will recalculate every balance.`)) onDeleteExpense(expense.id);
                         }}
-                        className="w-10 h-10 text-slate-500 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-colors cursor-pointer flex items-center justify-center"
+                        size="icon"
+                        variant="ghost"
+                        className="text-slate-500 hover:bg-rose-50 hover:text-rose-700"
                         aria-label={`Delete ${expense.title}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      </AppButton>
                     </div>
                   </div>
                 </div>
