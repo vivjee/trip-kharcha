@@ -44,7 +44,7 @@ export default function TripsHubView({
   }, 0);
 
   return (
-    <div className="w-full min-h-dvh bg-slate-900 text-slate-100 flex flex-col justify-between p-4 pt-[calc(1rem+env(safe-area-inset-top))] md:p-6 relative select-none">
+    <div className="w-full h-full min-h-0 overflow-hidden bg-slate-900 text-slate-100 flex flex-col justify-between p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] md:p-6 relative select-none">
       {/* Background Subtle Gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950/60 pointer-events-none" />
 
@@ -87,7 +87,7 @@ export default function TripsHubView({
       </div>
 
       {/* Center Content */}
-      <div className="relative z-10 flex-1 my-4 space-y-4 overflow-y-auto no-scrollbar">
+      <div className="relative z-10 min-h-0 flex-1 my-4 space-y-4 overflow-y-auto overscroll-contain no-scrollbar">
         {/* Filter Badges & Quick Action Header */}
         <div className="flex items-center justify-between gap-2 pt-1">
           <div className="flex items-center bg-slate-800/80 p-1 rounded-2xl border border-slate-700/80">

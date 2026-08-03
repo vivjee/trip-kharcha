@@ -451,7 +451,7 @@ export default function Home() {
   // Case 1: Zero Trips Exist
   if (trips.length === 0) {
     return (
-      <MobileFrame>
+      <MobileFrame scrollable={false}>
         <Toast message={toastMessage} />
         <ZeroStateIntro
           userProfile={userProfile}
@@ -478,7 +478,7 @@ export default function Home() {
   // Case 2: No Trip Selected (My Trips Hub View)
   if (!activeTripId || !currentTrip) {
     return (
-      <MobileFrame>
+      <MobileFrame scrollable={false}>
         <Toast message={toastMessage} />
         <TripsHubView
           trips={trips}
