@@ -115,10 +115,10 @@ export default function TripDashboard({
       </section>
 
       <div className="grid grid-cols-2 gap-3">
-        <AppButton variant="primary" size="large" onClick={onOpenAddExpense} fullWidth>
+        <AppButton variant="primary" size="large" onClick={onOpenAddExpense} fullWidth className="whitespace-nowrap px-2">
           <Plus className="h-5 w-5" /> Add expense
         </AppButton>
-        <AppButton variant="secondary" size="large" onClick={() => onOpenSettleUp()} fullWidth>
+        <AppButton variant="secondary" size="large" onClick={() => onOpenSettleUp()} fullWidth className="whitespace-nowrap px-2">
           <ArrowRightLeft className="h-5 w-5 text-emerald-600" /> Settle up
         </AppButton>
       </div>

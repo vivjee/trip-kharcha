@@ -150,8 +150,8 @@ export default function ExpensesView({
                   )}
 
                   {/* Details Footer: Who Paid & Included Badges */}
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                    <div className="flex items-center gap-1.5 text-slate-600 truncate max-w-[200px]">
+                  <div className="space-y-2 border-t border-slate-100 pt-2 text-xs">
+                    <div className="flex min-w-0 items-center gap-1.5 text-slate-600">
                       <User className="w-3 h-3 text-indigo-500 flex-shrink-0" />
                       <span className="truncate">
                         Paid by{' '}
@@ -168,7 +168,7 @@ export default function ExpensesView({
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-end gap-2">
                       <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500">
                         <Users className="w-3 h-3" />
                         {expense.includedParticipantIds.length} members

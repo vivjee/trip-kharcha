@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Trip, UserProfile } from '@/types/trip';
 import { getTripInitials } from '@/lib/trip-utils';
 import { getTripDurationInDays, formatDateRange } from '@/lib/date-utils';
-import { Plus, User, Calendar, Trash2, CheckCircle2, ChevronRight, Map } from 'lucide-react';
+import { Plus, User, Calendar, Trash2, CheckCircle2, Map } from 'lucide-react';
 import Avatar from '@/components/Avatar';
 import StoredPhoto from '@/components/StoredPhoto';
 import AppButton from '@/components/AppButton';
@@ -91,33 +91,36 @@ export default function TripsHubView({
               const durationDays = getTripDurationInDays(trip);
               return (
                 <article key={trip.id} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xs">
-                  <button type="button" onClick={() => onSelectTrip(trip.id)} className="w-full cursor-pointer p-4 pr-14 text-left">
-                    <div className="flex min-w-0 items-start gap-3">
+                  <button type="button" onClick={() => onSelectTrip(trip.id)} className="w-full cursor-pointer p-4 text-left">
+                    <div className="flex min-w-0 items-start gap-3 pr-12">
                       <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-indigo-100 font-black text-indigo-700">
                         {trip.coverPhotoId && <StoredPhoto photoId={trip.coverPhotoId} alt={`${trip.name} cover`} />}
                         <span className={trip.coverPhotoId ? 'opacity-0' : ''}>{getTripInitials(trip.name)}</span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex min-w-0 items-center gap-2">
+                        <div className="min-w-0">
                           <h2 className="truncate text-sm font-black text-slate-950">{trip.name}</h2>
-                          <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold ${trip.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                          <span className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs font-bold ${trip.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
                             {trip.status === 'active' ? 'Active' : <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Done</span>}
                           </span>
                         </div>
-                        <p className="mt-1 flex items-center gap-1 text-xs font-medium text-slate-500">
-                          <Calendar className="h-3.5 w-3.5" /> {formatDateRange(trip)} · {durationDays}d
-                        </p>
-                        <div className="mt-3 flex items-end justify-between gap-3 border-t border-slate-100 pt-3">
-                          <p className="text-xs font-semibold text-slate-500">{trip.participants.length} people · {trip.expenses.length} expenses</p>
-                          <div className="text-right">
-                            <p className="text-xs font-semibold text-slate-500">Total spent</p>
-                            <p className="text-sm font-black text-slate-950">{trip.currencySymbol} {tripSpending.toLocaleString()}</p>
-                          </div>
-                        </div>
+                      </div>
+                    </div>
+                    <p className="mt-3 flex items-center gap-1 text-xs font-medium text-slate-500">
+                      <Calendar className="h-3.5 w-3.5" /> {formatDateRange(trip)} · {durationDays}d
+                    </p>
+                    <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-500">Trip records</p>
+                        <p className="mt-0.5 text-sm font-black text-slate-800">{trip.participants.length} people · {trip.expenses.length} {trip.expenses.length === 1 ? 'expense' : 'expenses'}</p>
+                      </div>
+                      <div className="min-w-0 text-right">
+                        <p className="text-xs font-semibold text-slate-500">Total spent</p>
+                        <p className="mt-0.5 truncate text-sm font-black text-slate-950">{trip.currencySymbol} {tripSpending.toLocaleString()}</p>
                       </div>
                     </div>
                   </button>
-                  <div className="absolute right-2 top-2 flex flex-col gap-1">
+                  <div className="absolute right-2 top-2">
                     <AppButton
                       variant="ghost"
                       size="icon"
@@ -127,7 +130,6 @@ export default function TripsHubView({
                     >
                       <Trash2 className="h-4 w-4" />
                     </AppButton>
-                    <div className="flex h-11 w-11 items-center justify-center text-slate-400"><ChevronRight className="h-5 w-5" /></div>
                   </div>
                 </article>
               );
