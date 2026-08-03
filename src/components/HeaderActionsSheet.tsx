@@ -4,14 +4,12 @@ import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArchiveRestore,
-  History,
   LayoutGrid,
   PencilLine,
   Plus,
   RefreshCw,
   Share2,
   Trash2,
-  Users,
   X,
 } from 'lucide-react';
 import type { Trip } from '@/types/trip';
@@ -23,8 +21,6 @@ interface HeaderActionsSheetProps {
   onClose: () => void;
   onOpenNewTripModal: () => void;
   onOpenEditTripModal: () => void;
-  onOpenAddParticipant: () => void;
-  onOpenActivity: () => void;
   onOpenShareModal: () => void;
   onOpenSyncModal: () => void;
   onOpenTripsHub: () => void;
@@ -38,8 +34,6 @@ export default function HeaderActionsSheet({
   onClose,
   onOpenNewTripModal,
   onOpenEditTripModal,
-  onOpenAddParticipant,
-  onOpenActivity,
   onOpenShareModal,
   onOpenSyncModal,
   onOpenTripsHub,
@@ -83,8 +77,6 @@ export default function HeaderActionsSheet({
 
         <div className="space-y-4 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
           <div className="grid grid-cols-2 gap-3">
-            <AppButton fullWidth onClick={() => runAndClose(onOpenAddParticipant)}><Users className="h-4 w-4 text-indigo-600" /> Members</AppButton>
-            <AppButton fullWidth onClick={() => runAndClose(onOpenActivity)}><History className="h-4 w-4 text-indigo-600" /> Activity</AppButton>
             <AppButton fullWidth onClick={() => runAndClose(onOpenShareModal)}><Share2 className="h-4 w-4 text-indigo-600" /> Share</AppButton>
             <AppButton fullWidth onClick={() => runAndClose(onOpenSyncModal)}><ArchiveRestore className="h-4 w-4 text-indigo-600" /> Backup</AppButton>
             <AppButton fullWidth onClick={() => runAndClose(onOpenEditTripModal)}><PencilLine className="h-4 w-4 text-indigo-600" /> Edit trip</AppButton>

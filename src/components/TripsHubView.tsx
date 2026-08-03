@@ -106,13 +106,17 @@ export default function TripsHubView({
                         </div>
                       </div>
                     </div>
-                    <div className="mt-3 flex min-w-0 items-end justify-between gap-3 border-t border-slate-100 pt-3">
-                      <p className="flex min-w-0 items-center gap-1 truncate text-xs font-medium text-slate-500">
-                        <Calendar className="h-3.5 w-3.5 shrink-0" /> {formatDateRange(trip)} · {durationDays}d
-                      </p>
-                      <div className="min-w-0 shrink-0 text-right">
+                    <p className="mt-3 flex items-center gap-1 text-xs font-medium text-slate-500">
+                      <Calendar className="h-3.5 w-3.5" /> {formatDateRange(trip)} · {durationDays}d
+                    </p>
+                    <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-500">Trip records</p>
+                        <p className="mt-0.5 text-sm font-black text-slate-800">{trip.participants.length} people · {trip.expenses.length} {trip.expenses.length === 1 ? 'expense' : 'expenses'}</p>
+                      </div>
+                      <div className="min-w-0 text-right">
                         <p className="text-xs font-semibold text-slate-500">Total spent</p>
-                        <p className="mt-0.5 max-w-32 truncate text-sm font-black text-slate-950">{trip.currencySymbol} {tripSpending.toLocaleString()}</p>
+                        <p className="mt-0.5 truncate text-sm font-black text-slate-950">{trip.currencySymbol} {tripSpending.toLocaleString()}</p>
                       </div>
                     </div>
                   </button>

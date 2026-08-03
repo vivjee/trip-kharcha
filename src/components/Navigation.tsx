@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Home, Receipt, Scale, PieChart } from 'lucide-react';
+import { Home, Receipt, Scale, PieChart, History } from 'lucide-react';
 
-export type TabType = 'dashboard' | 'expenses' | 'balances' | 'analytics';
+export type TabType = 'dashboard' | 'expenses' | 'balances' | 'analytics' | 'activity';
 
 interface NavigationProps {
   activeTab: TabType;
@@ -23,6 +23,7 @@ export default function Navigation({ activeTab, setActiveTab, pendingDebtsCount 
       badge: pendingDebtsCount > 0 ? pendingDebtsCount : undefined,
     },
     { id: 'analytics' as TabType, label: 'Analytics', icon: PieChart },
+    { id: 'activity' as TabType, label: 'Activity', icon: History },
   ];
 
   return (
