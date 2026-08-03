@@ -201,7 +201,7 @@ function ExpenseForm({ trip, expense, onClose, onSaveExpense }: {
                   value={amountStr}
                   onChange={(event) => setAmountStr(event.target.value)}
                   placeholder="0"
-                  className="min-w-0 flex-1 border-0 bg-transparent p-0 text-right text-4xl font-black tracking-tight text-white placeholder:text-slate-600 focus:ring-0 focus:outline-none"
+                  className="min-w-0 flex-1 border-0 bg-transparent p-0 text-right text-4xl font-black tracking-tight text-white placeholder:text-slate-600 focus:ring-0 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 />
               </label>
             ) : (
