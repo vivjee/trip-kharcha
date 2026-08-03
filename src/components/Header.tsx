@@ -19,6 +19,7 @@ interface HeaderProps {
   onToggleTripStatus: () => void;
   onOpenShareModal: () => void;
   onOpenSyncModal: () => void;
+  onOpenSettings: () => void;
   onDeleteTrip: (tripId: string) => void;
   onResetDemoData: () => void;
 }
@@ -34,6 +35,7 @@ export default function Header({
   onToggleTripStatus,
   onOpenShareModal,
   onOpenSyncModal,
+  onOpenSettings,
   onDeleteTrip,
   onResetDemoData,
 }: HeaderProps) {
@@ -62,7 +64,7 @@ export default function Header({
   }, [isDropdownOpen]);
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white px-3 pb-2 pt-[calc(.5rem+env(safe-area-inset-top))] shadow-2xs md:px-4">
+    <header className="surface-card sticky top-0 z-30 flex items-center justify-between rounded-none border-x-0 border-t-0 px-3 pb-2 pt-[calc(.5rem+env(safe-area-inset-top))] md:px-5">
       {/* Left: Trip Avatar & Switcher Dropdown */}
       <div ref={tripSwitcherRef} className="relative flex items-center gap-1.5 min-w-0">
         <button
@@ -71,17 +73,17 @@ export default function Header({
           aria-haspopup="menu"
           className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl pr-2 text-left cursor-pointer group focus:outline-none"
         >
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-xs font-black text-white shadow-xs">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-accent-1 text-xs font-black text-white shadow-xs">
             {getTripInitials(currentTrip.name)}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1">
-              <h1 className="max-w-[105px] truncate text-sm font-extrabold leading-tight text-slate-900 transition-colors group-hover:text-indigo-600 xs:max-w-[145px] sm:max-w-[190px]">
+              <h1 className="max-w-[105px] truncate text-sm font-extrabold leading-tight text-text-hi transition-colors group-hover:text-accent-1 xs:max-w-[145px] sm:max-w-[190px] lg:max-w-[300px]">
                 {currentTrip.name}
               </h1>
-              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 flex-shrink-0 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-text-low flex-shrink-0 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </div>
-            <p className="hidden max-w-[165px] truncate text-[11px] font-semibold text-slate-500 xs:block">
+            <p className="hidden max-w-[165px] truncate text-[11px] font-semibold text-text-low xs:block lg:max-w-[360px]">
               {dateRangeStr} ({durationDays}d) • {currentTrip.participants.length} members
             </p>
           </div>
@@ -89,20 +91,20 @@ export default function Header({
 
         {/* Dropdown Menu */}
         {isDropdownOpen && (
-          <div role="menu" className="absolute left-0 top-12 z-50 w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl animate-pop-in">
+          <div role="menu" className="surface-card-strong absolute left-0 top-12 z-50 w-72 rounded-2xl p-2 animate-pop-in">
             {/* Return to Trips Hub */}
             <button
               onClick={() => {
                 setIsDropdownOpen(false);
                 onCloseTrip();
               }}
-              className="mb-1 flex min-h-11 w-full items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-3 text-[13px] font-bold text-slate-800 transition-colors hover:bg-slate-200 cursor-pointer"
+              className="surface-inset mb-1 flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-[13px] font-bold text-text-hi transition-colors cursor-pointer"
             >
-              <LayoutGrid className="w-4 h-4 text-indigo-600" />
+              <LayoutGrid className="w-4 h-4 text-accent-1" />
               <span>← All Trips Hub</span>
             </button>
 
-            <div className="px-3 py-2 text-xs font-extrabold uppercase tracking-wider text-slate-400">
+            <div className="px-3 py-2 text-xs font-extrabold uppercase tracking-wider text-text-faint">
               Your Trips ({trips.length})
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1 my-1 no-scrollbar">
@@ -111,8 +113,8 @@ export default function Header({
                   key={t.id}
                   className={`flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-[13px] font-semibold transition-colors ${
                     t.id === currentTrip.id
-                      ? 'bg-indigo-50 text-indigo-700'
-                      : 'hover:bg-slate-50 text-slate-700'
+                      ? 'surface-inset text-accent-1'
+                      : 'hover:bg-surface-deep text-text-mid'
                   }`}
                 >
                   <button
@@ -122,14 +124,14 @@ export default function Header({
                     }}
                     className="flex min-h-10 flex-1 items-center gap-2 truncate text-left cursor-pointer"
                   >
-                    <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-black text-[10px] flex items-center justify-center flex-shrink-0">
+                    <span className="w-6 h-6 rounded-lg bg-surface-deep text-accent-1 font-black text-[10px] flex items-center justify-center flex-shrink-0">
                       {getTripInitials(t.name)}
                     </span>
                     <span className="truncate">{t.name}</span>
                   </button>
                   
                   <div className="flex items-center gap-1">
-                    {t.id === currentTrip.id && <CheckCircle2 className="w-4 h-4 text-indigo-600" />}
+                    {t.id === currentTrip.id && <CheckCircle2 className="w-4 h-4 text-accent-1" />}
                   </div>
                 </div>
               ))}
@@ -194,6 +196,7 @@ export default function Header({
         onOpenEditTripModal={onOpenEditTripModal}
         onOpenShareModal={onOpenShareModal}
         onOpenSyncModal={onOpenSyncModal}
+        onOpenSettings={onOpenSettings}
         onOpenTripsHub={onCloseTrip}
         onDeleteTrip={onDeleteTrip}
         onResetDemoData={onResetDemoData}

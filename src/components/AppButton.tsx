@@ -12,11 +12,11 @@ interface AppButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<AppButtonVariant, string> = {
-  primary: 'border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm',
-  secondary: 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50 shadow-2xs',
-  ghost: 'border-transparent bg-slate-100 text-slate-700 hover:bg-slate-200',
-  danger: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100',
-  success: 'border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm',
+  primary: 'app-button-primary',
+  secondary: 'app-button-secondary',
+  ghost: 'app-button-ghost',
+  danger: 'app-button-danger',
+  success: 'app-button-success',
 };
 
 const sizes: Record<AppButtonSize, string> = {
@@ -38,7 +38,7 @@ export default function AppButton({
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center gap-2 border font-extrabold transition-colors active:translate-y-px cursor-pointer disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none ${variants[variant]} ${sizes[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
+      className={`app-button inline-flex items-center justify-center gap-2 font-extrabold cursor-pointer ${variants[variant]} ${sizes[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
       {...props}
     >
       {children}

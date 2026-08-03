@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { UserProfile } from '@/types/trip';
-import { Plus, User, UserCheck, CheckCircle2, Map } from 'lucide-react';
+import { Plus, User, UserCheck, CheckCircle2, Map, Settings2 } from 'lucide-react';
 import Avatar from '@/components/Avatar';
 import AppButton from '@/components/AppButton';
 
@@ -11,9 +11,10 @@ interface ZeroStateIntroProps {
   userProfile: UserProfile | null;
   onOpenCreateProfile: () => void;
   onOpenCreateTrip: () => void;
+  onOpenSettings: () => void;
 }
 
-export default function ZeroStateIntro({ userProfile, onOpenCreateProfile, onOpenCreateTrip }: ZeroStateIntroProps) {
+export default function ZeroStateIntro({ userProfile, onOpenCreateProfile, onOpenCreateTrip, onOpenSettings }: ZeroStateIntroProps) {
   return (
     <div className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-slate-950 p-4 select-none">
       <Image src="/images/nepal_hero.jpg" alt="Nepal mountain landscape" fill priority className="object-cover" />
@@ -27,9 +28,9 @@ export default function ZeroStateIntro({ userProfile, onOpenCreateProfile, onOpe
             <p className="text-xs font-semibold text-slate-300">Offline group expenses · v2</p>
           </div>
         </div>
-        <AppButton variant="secondary" size={userProfile ? 'standard' : 'icon'} onClick={onOpenCreateProfile} aria-label="Open profile">
+        <div className="flex items-center gap-2"><AppButton variant="ghost" size="icon" onClick={onOpenSettings} aria-label="Open appearance settings"><Settings2 className="h-5 w-5" /></AppButton><AppButton variant="secondary" size={userProfile ? 'standard' : 'icon'} onClick={onOpenCreateProfile} aria-label="Open profile">
           {userProfile ? <><Avatar person={userProfile} size="xs" /><span className="max-w-20 truncate">{userProfile.name}</span></> : <User className="h-5 w-5" />}
-        </AppButton>
+        </AppButton></div>
       </header>
 
       <main className="relative z-10 mx-auto my-auto w-full max-w-md">

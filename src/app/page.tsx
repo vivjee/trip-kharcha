@@ -32,6 +32,7 @@ import SyncTripModal from '@/components/SyncTripModal';
 import ClaimIdentityModal from '@/components/ClaimIdentityModal';
 import CreateProfileModal from '@/components/CreateProfileModal';
 import Toast from '@/components/Toast';
+import AppearanceSettings from '@/components/AppearanceSettings';
 
 export default function Home() {
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -51,6 +52,7 @@ export default function Home() {
   // Profile State
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isCreateProfileOpen, setIsCreateProfileOpen] = useState(false);
+  const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
 
   // Modals state
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
@@ -128,6 +130,10 @@ export default function Home() {
   }
 
   const currentTrip = trips.find((t) => t.id === activeTripId);
+
+  if (isAppearanceOpen) {
+    return <AppearanceSettings onClose={() => setIsAppearanceOpen(false)} />;
+  }
 
   const simplifiedDebts = currentTrip
     ? calculateSimplifiedDebts(currentTrip)
@@ -464,6 +470,7 @@ export default function Home() {
           userProfile={userProfile}
           onOpenCreateProfile={() => setIsCreateProfileOpen(true)}
           onOpenCreateTrip={() => setIsTripModalOpen(true)}
+          onOpenSettings={() => setIsAppearanceOpen(true)}
         />
         <TripModal
           isOpen={isTripModalOpen}
@@ -493,6 +500,7 @@ export default function Home() {
           onSelectTrip={handleSelectTrip}
           onOpenNewTripModal={() => setIsTripModalOpen(true)}
           onOpenCreateProfile={() => setIsCreateProfileOpen(true)}
+          onOpenSettings={() => setIsAppearanceOpen(true)}
           onDeleteTrip={handleDeleteTrip}
         />
         <TripModal
@@ -514,7 +522,7 @@ export default function Home() {
 
   // Case 3: Active Single Trip Selected
   return (
-    <MobileFrame>
+    <MobileFrame workspace>
       <Toast message={toastMessage} />
 
       {/* Header with Close Button */}
@@ -532,6 +540,7 @@ export default function Home() {
         onToggleTripStatus={handleToggleTripStatus}
         onOpenShareModal={() => setIsShareModalOpen(true)}
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
+        onOpenSettings={() => setIsAppearanceOpen(true)}
         onDeleteTrip={handleDeleteTrip}
         onResetDemoData={handleResetDemoData}
       />
@@ -638,6 +647,8 @@ export default function Home() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         pendingDebtsCount={simplifiedDebts.length}
+        tripName={currentTrip.name}
+        onOpenSettings={() => setIsAppearanceOpen(true)}
       />
 
       {/* Modals */}

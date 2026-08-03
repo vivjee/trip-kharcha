@@ -237,6 +237,38 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .app-field::placeholder { color: var(--text-faint); }
 .app-field:focus { border-color: color-mix(in srgb, var(--accent-1) 60%, var(--surface-border)); }
 
+.app-button {
+  border: 1px solid var(--surface-border);
+  color: var(--text-hi);
+  transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease, color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-soft);
+}
+.app-button-primary {
+  border-color: color-mix(in srgb, var(--accent-1) 72%, var(--surface-border));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-1) 88%, var(--surface-raised)), color-mix(in srgb, var(--accent-1) 66%, var(--accent-3)));
+  color: white;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent-1) 22%, transparent), inset 0 1px 0 rgba(255,255,255,.18);
+}
+.app-button-primary:hover { filter: brightness(1.07); }
+.app-button-secondary {
+  background: var(--surface-raised);
+  box-shadow: inset 1px 1px 0 var(--surface-inset-hi), var(--nm-raised-soft);
+}
+.app-button-secondary:hover, .app-button-ghost:hover { background: var(--surface-raised-hover); border-color: var(--glass-border-hover); }
+.app-button-ghost { background: color-mix(in srgb, var(--surface-raised) 72%, transparent); color: var(--text-mid); }
+.app-button-danger { background: var(--danger-soft); border-color: color-mix(in srgb, var(--danger) 30%, transparent); color: var(--danger); }
+.app-button-success { background: color-mix(in srgb, var(--success) 78%, var(--surface-raised)); border-color: color-mix(in srgb, var(--success) 56%, transparent); color: #061a15; }
+[data-theme="dark"] .app-button-success { color: #041713; }
+.app-button:active { transform: translateY(1px); box-shadow: var(--nm-sunken-soft); }
+.app-button:disabled { cursor: not-allowed; border-color: var(--nm-line-faint); background: var(--surface-deep); color: var(--text-faint); box-shadow: none; filter: none; }
+
+.app-scrim { background: color-mix(in srgb, var(--ink-0) 72%, transparent); backdrop-filter: blur(8px); }
+.text-status-success { color: var(--success); }
+.bg-status-success { background: var(--success-soft); }
+.text-status-warning { color: var(--warning); }
+.bg-status-warning { background: var(--warning-soft); }
+.text-status-danger { color: var(--danger); }
+.bg-status-danger { background: var(--danger-soft); }
+
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .luxury-glass-card {

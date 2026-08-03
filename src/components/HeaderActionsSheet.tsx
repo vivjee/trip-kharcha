@@ -8,6 +8,7 @@ import {
   PencilLine,
   Plus,
   RefreshCw,
+  Settings2,
   Share2,
   Trash2,
   X,
@@ -23,6 +24,7 @@ interface HeaderActionsSheetProps {
   onOpenEditTripModal: () => void;
   onOpenShareModal: () => void;
   onOpenSyncModal: () => void;
+  onOpenSettings: () => void;
   onOpenTripsHub: () => void;
   onDeleteTrip: (tripId: string) => void;
   onResetDemoData: () => void;
@@ -36,6 +38,7 @@ export default function HeaderActionsSheet({
   onOpenEditTripModal,
   onOpenShareModal,
   onOpenSyncModal,
+  onOpenSettings,
   onOpenTripsHub,
   onDeleteTrip,
   onResetDemoData,
@@ -57,18 +60,18 @@ export default function HeaderActionsSheet({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/55 md:items-center md:p-4" onPointerDown={onClose}>
+    <div className="app-scrim fixed inset-0 z-[70] flex items-end justify-center md:items-center md:p-4" onPointerDown={onClose}>
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby="trip-actions-title"
         onPointerDown={(event) => event.stopPropagation()}
-        className="w-full max-w-md rounded-t-3xl border border-slate-200 bg-white shadow-2xl md:rounded-3xl"
+        className="surface-card-strong w-full max-w-md rounded-t-3xl md:rounded-3xl"
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+        <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <div>
-            <h2 id="trip-actions-title" className="text-base font-black text-slate-950">Trip actions</h2>
-            <p className="mt-0.5 max-w-[260px] truncate text-xs font-medium text-slate-500">{trip.name}</p>
+            <h2 id="trip-actions-title" className="text-base font-black text-text-hi">Trip actions</h2>
+            <p className="mt-0.5 max-w-[260px] truncate text-xs font-medium text-text-low">{trip.name}</p>
           </div>
           <AppButton size="icon" variant="ghost" onClick={onClose} aria-label="Close trip actions">
             <X className="h-5 w-5" />
@@ -81,14 +84,15 @@ export default function HeaderActionsSheet({
             <AppButton fullWidth onClick={() => runAndClose(onOpenSyncModal)}><ArchiveRestore className="h-4 w-4 text-indigo-600" /> Backup</AppButton>
             <AppButton fullWidth onClick={() => runAndClose(onOpenEditTripModal)}><PencilLine className="h-4 w-4 text-indigo-600" /> Edit trip</AppButton>
             <AppButton fullWidth onClick={() => runAndClose(onOpenTripsHub)}><LayoutGrid className="h-4 w-4 text-indigo-600" /> Trips Hub</AppButton>
+            <AppButton fullWidth onClick={() => runAndClose(onOpenSettings)}><Settings2 className="h-4 w-4 text-accent-1" /> Appearance</AppButton>
           </div>
 
           <AppButton variant="primary" size="large" fullWidth onClick={() => runAndClose(onOpenNewTripModal)}>
             <Plus className="h-5 w-5" /> Create new trip
           </AppButton>
 
-          <div className="border-t border-slate-200 pt-4">
-            <p className="mb-2 text-xs font-bold text-slate-500">Danger zone</p>
+          <div className="border-t border-line pt-4">
+            <p className="mb-2 text-xs font-bold text-text-low">Danger zone</p>
             <div className="grid grid-cols-2 gap-3">
               <AppButton variant="danger" fullWidth onClick={() => runAndClose(() => onDeleteTrip(trip.id))}>
                 <Trash2 className="h-4 w-4" /> Delete trip

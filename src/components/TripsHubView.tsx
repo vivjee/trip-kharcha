@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Trip, UserProfile } from '@/types/trip';
 import { getTripInitials } from '@/lib/trip-utils';
 import { getTripDurationInDays, formatDateRange } from '@/lib/date-utils';
-import { Plus, User, Calendar, Trash2, CheckCircle2, Map } from 'lucide-react';
+import { Plus, User, Calendar, Trash2, CheckCircle2, Map, Settings2 } from 'lucide-react';
 import Avatar from '@/components/Avatar';
 import StoredPhoto from '@/components/StoredPhoto';
 import AppButton from '@/components/AppButton';
@@ -15,6 +15,7 @@ interface TripsHubViewProps {
   onSelectTrip: (tripId: string) => void;
   onOpenNewTripModal: () => void;
   onOpenCreateProfile: () => void;
+  onOpenSettings: () => void;
   onDeleteTrip: (tripId: string) => void;
 }
 
@@ -24,6 +25,7 @@ export default function TripsHubView({
   onSelectTrip,
   onOpenNewTripModal,
   onOpenCreateProfile,
+  onOpenSettings,
   onDeleteTrip,
 }: TripsHubViewProps) {
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
@@ -32,7 +34,7 @@ export default function TripsHubView({
   const filteredTrips = trips.filter((trip) => filter === 'all' || trip.status === filter);
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-slate-50 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] text-slate-900 md:p-6">
+    <div className="relative mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col overflow-hidden px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] text-text-hi md:p-6">
       <header className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white">
@@ -47,9 +49,9 @@ export default function TripsHubView({
           </div>
         </div>
 
-        <AppButton variant="secondary" size={userProfile ? 'standard' : 'icon'} onClick={onOpenCreateProfile} aria-label="Open profile">
+        <div className="flex items-center gap-2"><AppButton variant="ghost" size="icon" onClick={onOpenSettings} aria-label="Open appearance settings"><Settings2 className="h-5 w-5" /></AppButton><AppButton variant="secondary" size={userProfile ? 'standard' : 'icon'} onClick={onOpenCreateProfile} aria-label="Open profile">
           {userProfile ? <><Avatar person={userProfile} size="xs" /><span className="max-w-20 truncate">{userProfile.name}</span></> : <User className="h-5 w-5" />}
-        </AppButton>
+        </AppButton></div>
       </header>
 
       <div className="shrink-0 py-4">
@@ -85,7 +87,7 @@ export default function TripsHubView({
             </AppButton>
           </div>
         ) : (
-          <div className="space-y-3 pb-2">
+          <div className="grid gap-3 pb-2 md:grid-cols-2 xl:grid-cols-3">
             {filteredTrips.map((trip) => {
               const tripSpending = trip.expenses.reduce((sum, expense) => sum + expense.amount, 0);
               const durationDays = getTripDurationInDays(trip);
