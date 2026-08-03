@@ -142,30 +142,19 @@ export default function TripDashboard({
           {contributionBalances.map((balance) => {
             const contribution = stats.totalSpent > 0 ? (balance.totalPaid / stats.totalSpent) * 100 : 0;
             const paidAmountLabel = `${trip.currencySymbol} ${formatCompactAmount(balance.totalPaid)}`;
-            const balanceLabel = balance.netBalance > 0
-              ? `Gets ${trip.currencySymbol} ${formatCompactAmount(balance.netBalance)}`
-              : balance.netBalance < 0
-                ? `Owes ${trip.currencySymbol} ${formatCompactAmount(Math.abs(balance.netBalance))}`
-                : 'Settled';
-            const exactBalanceLabel = balance.netBalance > 0
-              ? `Gets back ${trip.currencySymbol} ${balance.netBalance.toLocaleString()}`
-              : balance.netBalance < 0
-                ? `Owes ${trip.currencySymbol} ${Math.abs(balance.netBalance).toLocaleString()}`
-                : 'Settled';
             return (
-              <div key={balance.participantId} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+              <div key={balance.participantId} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-2">
                 <div className="flex min-w-0 items-center gap-2">
                   <Avatar person={{ name: balance.participantName, avatar: balance.avatar, photoId: balance.photoId }} size="xs" />
                   <p className="min-w-0 truncate text-sm font-extrabold text-slate-900" title={balance.participantName}>{balance.participantName}</p>
                 </div>
-                <p className="mt-2 truncate text-sm font-black text-slate-950" title={`${trip.currencySymbol} ${balance.totalPaid.toLocaleString()} paid`}>{paidAmountLabel}</p>
-                <div className="mt-1 flex items-center gap-2">
-                  <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label={`${balance.participantName} contribution`} aria-valuenow={Math.round(contribution)} aria-valuemin={0} aria-valuemax={100}>
-                    <div className="h-full rounded-full bg-indigo-600" style={{ width: `${Math.min(contribution, 100)}%` }} />
-                  </div>
+                <div className="mt-1 flex min-w-0 items-center justify-between gap-1.5">
+                  <p className="min-w-0 truncate text-[13px] font-black text-slate-950" title={`${trip.currencySymbol} ${balance.totalPaid.toLocaleString()} paid`}>{paidAmountLabel}</p>
                   <p className="shrink-0 text-[11px] font-bold text-slate-500">{contribution.toFixed(0)}%</p>
                 </div>
-                <p className={`mt-1.5 truncate text-[11px] font-bold ${balance.netBalance > 0 ? 'text-emerald-700' : balance.netBalance < 0 ? 'text-rose-700' : 'text-slate-500'}`} title={exactBalanceLabel}>{balanceLabel}</p>
+                <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label={`${balance.participantName} contribution`} aria-valuenow={Math.round(contribution)} aria-valuemin={0} aria-valuemax={100}>
+                    <div className="h-full rounded-full bg-indigo-600" style={{ width: `${Math.min(contribution, 100)}%` }} />
+                </div>
               </div>
             );
           })}
