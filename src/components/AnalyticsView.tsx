@@ -63,47 +63,47 @@ export default function AnalyticsView({ trip }: AnalyticsViewProps) {
       </div>
 
       {/* Hero Stats Grid */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="col-span-2 space-y-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
           <div className="flex items-center gap-1 text-slate-400">
             <DollarSign className="w-3.5 h-3.5 text-indigo-600" />
-            <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500">
-              Total
+            <span className="text-xs font-extrabold text-slate-500">
+              Total spent
             </span>
           </div>
-          <p className="text-xs font-black text-slate-900 truncate">
+          <p className="truncate text-2xl font-black text-slate-900">
             {trip.currencySymbol}{stats.totalSpent.toLocaleString()}
           </p>
         </div>
 
-        <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+        <div className="space-y-1 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xs">
           <div className="flex items-center gap-1 text-slate-400">
             <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500">
-              Daily
+            <span className="text-xs font-extrabold text-slate-500">
+              Per day
             </span>
           </div>
-          <p className="text-xs font-black text-emerald-700 truncate">
+          <p className="truncate text-sm font-black text-emerald-700">
             {trip.currencySymbol}{dailyPace.toLocaleString()}
           </p>
         </div>
 
-        <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+        <div className="space-y-1 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xs">
           <div className="flex items-center gap-1 text-slate-400">
             <Award className="w-3.5 h-3.5 text-amber-500" />
-            <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-500">
-              Top
+            <span className="text-xs font-extrabold text-slate-500">
+              Top payer
             </span>
           </div>
-          <p className="text-xs font-black text-slate-900 flex items-center gap-0.5 truncate">
+          <p className="flex items-center gap-0.5 truncate text-sm font-black text-slate-900">
             <span>{stats.topSpender?.avatar}</span>
-            <span className="truncate">{stats.topSpender?.participantName?.split(' ')[0] || 'N/A'}</span>
+            <span className="truncate">{stats.totalSpent > 0 ? stats.topSpender?.participantName?.split(' ')[0] : 'No spending'}</span>
           </p>
         </div>
       </div>
 
       {/* Category Spending Breakdown */}
-      <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-3">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
             Spending by Category
@@ -161,7 +161,7 @@ export default function AnalyticsView({ trip }: AnalyticsViewProps) {
       </div>
 
       {/* Member Expenditure Breakdown */}
-      <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-3">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
         <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
           Who Paid How Much
         </h3>

@@ -6,6 +6,7 @@ import { calculateParticipantBalances, getSettlementProgress } from '@/lib/debt-
 import { ArrowRight, CheckCircle2, Sparkles, Trophy, Pencil, Trash2, History } from 'lucide-react';
 import { formatDateTime, toLocalDateTimeInput } from '@/lib/date-utils';
 import Avatar from '@/components/Avatar';
+import AppButton from '@/components/AppButton';
 
 interface BalancesViewProps {
   trip: Trip;
@@ -37,17 +38,17 @@ export default function BalancesView({
       </div>
 
       {/* Visual Settlement Progress Bar Card */}
-      <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-4 text-white shadow-xl space-y-2 border border-slate-800">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
-            <Trophy className="w-4 h-4 text-amber-400" />
+          <div className="flex items-center gap-1.5 text-sm font-bold text-slate-800">
+            <Trophy className="w-4 h-4 text-amber-500" />
             <span>Settlement Progress</span>
           </div>
           <span
             className={`text-xs font-black px-2.5 py-0.5 rounded-full ${
               progress.percentage === 100
                 ? 'bg-emerald-500 text-white'
-                : 'bg-indigo-500/30 text-indigo-300 border border-indigo-400/30'
+                : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
             }`}
           >
             {progress.percentage}% Settled
@@ -55,20 +56,20 @@ export default function BalancesView({
         </div>
 
         {/* Animated Progress Stack */}
-        <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700">
+        <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 rounded-full transition-all duration-500 shadow-sm"
+            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
             style={{ width: `${progress.percentage}%` }}
           />
         </div>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium pt-0.5">
+        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
           <span>Recorded: {trip.currencySymbol} {progress.recorded.toLocaleString()}</span>
           <span>Pending: {trip.currencySymbol} {progress.pending.toLocaleString()}</span>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-3">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
         <div className="flex items-center gap-1.5">
           <History className="w-4 h-4 text-emerald-600" />
           <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">Recorded Settlements ({trip.settlements.length})</h3>
@@ -87,8 +88,8 @@ export default function BalancesView({
                     <p className="text-xs text-slate-500">{formatDateTime(toLocalDateTimeInput(settlement.date, settlement.createdAt))} · {trip.currencySymbol} {settlement.amount.toLocaleString()}</p>
                   </div>
                   <div className="flex flex-shrink-0">
-                    <button onClick={() => onEditSettlement(settlement)} aria-label={`Edit settlement from ${from?.name}`} className="w-10 h-10 rounded-xl text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 flex items-center justify-center cursor-pointer"><Pencil className="w-4 h-4" /></button>
-                    <button onClick={() => { if (window.confirm('Delete this settlement? Balances will be recalculated.')) onDeleteSettlement(settlement.id); }} aria-label={`Delete settlement from ${from?.name}`} className="w-10 h-10 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center cursor-pointer"><Trash2 className="w-4 h-4" /></button>
+                    <AppButton onClick={() => onEditSettlement(settlement)} size="icon" variant="ghost" aria-label={`Edit settlement from ${from?.name}`}><Pencil className="w-4 h-4" /></AppButton>
+                    <AppButton onClick={() => { if (window.confirm('Delete this settlement? Balances will be recalculated.')) onDeleteSettlement(settlement.id); }} size="icon" variant="ghost" className="hover:bg-rose-50 hover:text-rose-700" aria-label={`Delete settlement from ${from?.name}`}><Trash2 className="w-4 h-4" /></AppButton>
                   </div>
                 </div>
               );
@@ -98,7 +99,7 @@ export default function BalancesView({
       </div>
 
       {/* Simplified Debts Section (Optimal Payments needed) */}
-      <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-3">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Sparkles className="w-4 h-4 text-indigo-600" />
@@ -124,10 +125,10 @@ export default function BalancesView({
             {simplifiedDebts.map((debt) => (
               <div
                 key={debt.id}
-                className="bg-slate-50 hover:bg-indigo-50/40 p-3.5 rounded-2xl border border-slate-200 transition-all flex items-center justify-between"
+                className="rounded-xl border border-slate-200 bg-slate-50 p-3"
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                <div className="flex min-w-0 items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-1.5 text-xs font-bold text-slate-800">
                     <span className="bg-white px-2 py-1 rounded-xl shadow-2xs flex items-center gap-1.5">
                       <Avatar person={debt.from} size="xs" /> {debt.from.name}
                     </span>
@@ -136,22 +137,14 @@ export default function BalancesView({
                       <Avatar person={debt.to} size="xs" /> {debt.to.name}
                     </span>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2.5">
-                  <div className="text-right">
-                    <p className="text-xs font-black text-slate-900">
+                  <div className="shrink-0 text-right">
+                    <p className="text-sm font-black text-slate-900">
                       {trip.currencySymbol} {debt.amount.toLocaleString()}
                     </p>
-                    <p className="text-[9px] text-slate-400 font-medium">To Settle</p>
+                    <p className="text-xs text-slate-500 font-medium">To settle</p>
                   </div>
-                  <button
-                    onClick={() => onOpenSettleUp(debt)}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
-                  >
-                    Settle
-                  </button>
                 </div>
+                <AppButton variant="success" size="standard" fullWidth className="mt-3" onClick={() => onOpenSettleUp(debt)}>Settle payment</AppButton>
               </div>
             ))}
           </div>
@@ -159,7 +152,7 @@ export default function BalancesView({
       </div>
 
       {/* Individual Net Balances Breakdown */}
-      <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm space-y-3">
+      <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
         <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
           Net Balances Summary
         </h3>

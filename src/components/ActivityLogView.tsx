@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Trip, AuditLogEntry } from '@/types/trip';
 import { History, PlusCircle, Trash2, CheckCircle2, UserCheck, Sparkles, Filter, PencilLine, UserMinus, UserPlus } from 'lucide-react';
 import Avatar from '@/components/Avatar';
@@ -53,7 +52,7 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
   return (
     <div className="p-4 space-y-4 animate-pop-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h2 className="text-base font-black text-slate-900 leading-tight flex items-center gap-1.5">
             <History className="w-4 h-4 text-indigo-600" />
@@ -66,13 +65,13 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
 
         {/* Filter Dropdown */}
         {trip.participants.length > 0 && (
-          <div className="flex items-center gap-1 bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs">
-            <Filter className="w-3 h-3 text-slate-400" />
+          <div className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 shadow-2xs">
+            <Filter className="w-4 h-4 text-slate-400" />
             <select
               aria-label="Filter activity by member"
               value={filterParticipantId}
               onChange={(e) => setFilterParticipantId(e.target.value)}
-              className="text-[10px] font-extrabold text-slate-700 bg-transparent focus:outline-none cursor-pointer"
+              className="min-h-10 flex-1 cursor-pointer bg-transparent text-xs font-extrabold text-slate-700 focus:outline-none"
             >
               <option value="all">All Members ({logs.length})</option>
               {trip.participants.map((p) => (
@@ -101,9 +100,7 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
             const Icon = badge.icon;
 
             return (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+              <div
                 key={log.id}
                 className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-1.5"
               >
@@ -127,7 +124,7 @@ export default function ActivityLogView({ trip }: ActivityLogViewProps) {
                 <p className="text-xs text-slate-700 font-bold pl-9">
                   {log.details}
                 </p>
-              </motion.div>
+              </div>
             );
           })}
         </div>
