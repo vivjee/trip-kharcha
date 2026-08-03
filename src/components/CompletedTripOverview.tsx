@@ -179,7 +179,7 @@ export default function CompletedTripOverview({
           </div>
 
           <div className="overflow-x-auto pb-1 no-scrollbar">
-            <div className="flex h-40 min-w-full items-end gap-2" style={{ width: `${Math.max(100, recap.dailySpending.length * 52)}%` }}>
+            <div className="flex h-40 items-end gap-2" style={{ minWidth: `${Math.max(320, recap.dailySpending.length * 48)}px` }}>
               {recap.dailySpending.map((day) => {
                 const height = Math.max(12, (day.amount / maxDaySpend) * 100);
                 return (
