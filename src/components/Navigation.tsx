@@ -30,13 +30,13 @@ function NavItem({ item, active, badge, onClick, desktop = false }: {
       type="button"
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      className={`${desktop ? 'min-h-12 w-full flex-row justify-start gap-3 px-3' : 'h-full w-full flex-col justify-center gap-1'} relative flex items-center rounded-xl text-xs font-extrabold transition-colors cursor-pointer ${active ? 'text-accent-1' : 'text-text-low hover:text-text-hi'}`}
+      className={`${desktop ? 'min-h-12 w-full flex-row justify-start gap-3 px-3 text-[13px]' : 'h-full min-w-0 flex-1 flex-col justify-center gap-0.5 px-0.5 text-[10px] min-[360px]:text-[11px]'} relative flex items-center rounded-xl font-bold leading-none [font-family:var(--font-inter)] transition-colors cursor-pointer ${active ? 'text-accent-1' : 'text-text-mid hover:text-text-hi'}`}
     >
-      <span className={`relative grid h-8 w-8 place-items-center rounded-xl ${active ? 'surface-inset' : ''}`}>
-        <Icon className={`h-5 w-5 ${active ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
+      <span className={`relative grid h-8 w-8 shrink-0 place-items-center rounded-xl ${active ? 'surface-inset' : ''}`}>
+        <Icon className={`h-[19px] w-[19px] ${active ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
         {badge ? <span className="absolute -right-1.5 -top-1 min-w-4 rounded-full bg-negative px-1 text-center font-mono text-[9px] font-black text-white">{badge}</span> : null}
       </span>
-      <span>{item.label}</span>
+      <span className="block max-w-full truncate whitespace-nowrap tracking-[-0.01em]">{item.label}</span>
       {active && !desktop ? <span className="absolute top-0 h-0.5 w-9 rounded-full bg-accent-1" /> : null}
     </button>
   );
@@ -45,7 +45,7 @@ function NavItem({ item, active, badge, onClick, desktop = false }: {
 export default function Navigation({ activeTab, setActiveTab, pendingDebtsCount, tripName, onOpenSettings }: NavigationProps) {
   return (
     <>
-      <nav aria-label="Trip sections" className="surface-card fixed bottom-0 left-0 right-0 z-40 flex h-[calc(4rem+env(safe-area-inset-bottom))] items-center justify-around border-x-0 border-b-0 px-2 pb-[env(safe-area-inset-bottom)] lg:hidden">
+      <nav aria-label="Trip sections" className="surface-card fixed bottom-0 left-0 right-0 z-40 flex h-[calc(4rem+env(safe-area-inset-bottom))] items-center border-x-0 border-b-0 px-1 pb-[env(safe-area-inset-bottom)] lg:hidden">
         {navItems.map((item) => <NavItem key={item.id} item={item} active={activeTab === item.id} badge={item.id === 'balances' ? pendingDebtsCount : undefined} onClick={() => setActiveTab(item.id)} />)}
       </nav>
 

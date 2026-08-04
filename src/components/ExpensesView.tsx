@@ -46,7 +46,7 @@ export default function ExpensesView({
         <div>
           <h2 className="text-base font-black text-slate-900 leading-tight">Trip Expenses</h2>
           <p className="text-[11px] text-slate-500 font-medium">
-            {trip.expenses.length} Total recorded items
+            {trip.expenses.length} recorded {trip.expenses.length === 1 ? 'expense' : 'expenses'}
           </p>
         </div>
         <AppButton onClick={onOpenAddExpense} size="large">
@@ -111,17 +111,17 @@ export default function ExpensesView({
                   key={expense.id}
                   className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all space-y-2"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl shadow-xs">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <div className="w-10 h-10 shrink-0 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl shadow-xs">
                         {categoryIcons[expense.category] || '🧾'}
                       </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-slate-900 leading-tight">
+                      <div className="min-w-0">
+                        <h3 className="truncate text-sm font-bold text-slate-900 leading-tight">
                           {expense.title}
                         </h3>
-                        <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                          <span className="flex items-center gap-0.5">
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+                          <span className="flex items-center gap-0.5 whitespace-nowrap">
                             <Calendar className="w-3 h-3 text-slate-400" />
                             {formatDateTime(toLocalDateTimeInput(expense.date, expense.createdAt))}
                           </span>
@@ -133,11 +133,11 @@ export default function ExpensesView({
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <p className="font-amount text-sm font-black text-slate-900">
+                    <div className="shrink-0 text-right">
+                      <p className="font-amount whitespace-nowrap text-sm font-black text-slate-900">
                         {trip.currencySymbol} {expense.amount.toLocaleString()}
                       </p>
-                      <p className="mt-0.5 text-xs font-semibold text-indigo-600">
+                      <p className="mt-0.5 whitespace-nowrap text-xs font-semibold text-indigo-600">
                         {trip.currencySymbol} {Math.round(perPerson).toLocaleString()} / person
                       </p>
                     </div>
@@ -159,7 +159,7 @@ export default function ExpensesView({
                           <strong className="text-slate-900">
                             {expense.payers.map(p => {
                               const part = getParticipant(p.participantId);
-                              return `${part?.name || 'Someone'} (${trip.currencySymbol}${p.amount})`;
+                              return `${part?.name || 'Someone'} (${trip.currencySymbol} ${p.amount.toLocaleString()})`;
                             }).join(', ')}
                           </strong>
                         ) : (
