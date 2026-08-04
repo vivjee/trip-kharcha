@@ -1,25 +1,51 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Check, Grid3X3, Layers3, MoonStar, Palette, RotateCcw, Sparkles, Sun, Type, WandSparkles } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ArrowLeft,
+  Check,
+  Grid3X3,
+  Layers3,
+  MoonStar,
+  Palette,
+  RotateCcw,
+  Sun,
+  Type,
+  WandSparkles,
+} from 'lucide-react';
 import AppButton from '@/components/AppButton';
 import { useAppearance } from '@/components/AppearanceProvider';
-import type { BackgroundPattern, FontStyle } from '@/lib/appearance';
+import type { BackgroundPattern, FontStyle, SurfaceStyle } from '@/lib/appearance';
 
 type Section = 'theme' | 'surface' | 'background' | 'typeface' | 'motion';
 
-const sections: { id: Section; label: string; icon: typeof Palette }[] = [
-  { id: 'theme', label: 'Theme', icon: Palette },
-  { id: 'surface', label: 'Surface', icon: Layers3 },
-  { id: 'background', label: 'Background', icon: Grid3X3 },
-  { id: 'typeface', label: 'Typeface', icon: Type },
-  { id: 'motion', label: 'Motion', icon: WandSparkles },
+interface SectionMeta {
+  id: Section;
+  label: string;
+  mobileLabel: string;
+  hint: string;
+  icon: typeof Palette;
+}
+
+const sections: SectionMeta[] = [
+  { id: 'theme', label: 'Theme', mobileLabel: 'Theme', hint: 'Light or dark, color and contrast across the app.', icon: Palette },
+  { id: 'surface', label: 'Surface', mobileLabel: 'Surface', hint: 'How cards and controls create depth.', icon: Layers3 },
+  { id: 'background', label: 'Background', mobileLabel: 'Pattern', hint: 'The atmosphere behind working surfaces.', icon: Grid3X3 },
+  { id: 'typeface', label: 'Typeface', mobileLabel: 'Type', hint: 'Your display personality. Amounts stay easy to read.', icon: Type },
+  { id: 'motion', label: 'Motion', mobileLabel: 'Motion', hint: 'Movement comfort for the whole app.', icon: WandSparkles },
 ];
 
 const fontVars: Record<FontStyle, string> = {
-  default: 'var(--font-space-grotesk)', cyber: 'var(--font-orbitron)', wide: 'var(--font-syncopate)', mono: 'var(--font-jetbrains-mono)',
-  'avant-garde': 'var(--font-syne)', editorial: 'var(--font-fraunces)', couture: 'var(--font-instrument-serif)', marquee: 'var(--font-anton)',
-  pillow: 'var(--font-quicksand)', bricolage: 'var(--font-bricolage)',
+  default: 'var(--font-space-grotesk)',
+  cyber: 'var(--font-orbitron)',
+  wide: 'var(--font-syncopate)',
+  mono: 'var(--font-jetbrains-mono)',
+  'avant-garde': 'var(--font-syne)',
+  editorial: 'var(--font-fraunces)',
+  couture: 'var(--font-instrument-serif)',
+  marquee: 'var(--font-anton)',
+  pillow: 'var(--font-quicksand)',
+  bricolage: 'var(--font-bricolage)',
 };
 
 function patternStyle(id: BackgroundPattern): React.CSSProperties {
@@ -31,44 +57,92 @@ function patternStyle(id: BackgroundPattern): React.CSSProperties {
   return {};
 }
 
-function surfacePreviewStyle(id: 'neumorphic' | 'material' | 'flat'): React.CSSProperties {
+function surfacePreviewStyle(id: SurfaceStyle): React.CSSProperties {
   if (id === 'neumorphic') return { border: '1px solid var(--surface-border)', boxShadow: '5px 5px 11px var(--nm-lo),-5px -5px 11px var(--nm-hi)' };
   if (id === 'material') return { border: '1px solid color-mix(in srgb,var(--text-hi) 9%,transparent)', boxShadow: '0 2px 5px color-mix(in srgb,var(--nm-lo) 45%,transparent),0 10px 20px color-mix(in srgb,var(--nm-lo) 30%,transparent)' };
   return { border: '1px solid color-mix(in srgb,var(--text-hi) 17%,transparent)', boxShadow: '0 1px 2px color-mix(in srgb,var(--nm-lo) 12%,transparent)' };
+}
+
+function SelectionMark({ active, color = 'text-accent-1' }: { active: boolean; color?: string }) {
+  return (
+    <span aria-hidden className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border ${active ? `border-current bg-surface-deep ${color}` : 'border-line text-transparent'}`}>
+      <Check className="h-3 w-3" strokeWidth={3} />
+    </span>
+  );
 }
 
 export default function AppearanceSettings({ onClose }: { onClose: () => void }) {
   const appearance = useAppearance();
   const [section, setSection] = useState<Section>('theme');
   const [message, setMessage] = useState('');
+  const contentRef = useRef<HTMLDivElement>(null);
+  const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeMeta = sections.find((item) => item.id === section)!;
   const ActiveIcon = activeMeta.icon;
 
+  useEffect(() => () => {
+    if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+  }, []);
+
   useEffect(() => {
-    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', close);
-    return () => document.removeEventListener('keydown', close);
-  }, [onClose]);
+    contentRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [section]);
 
-  const notify = (text: string, action: () => void) => {
-    action(); setMessage(text); window.setTimeout(() => setMessage(''), 1600);
-  };
+  const notify = useCallback((text: string, action: () => void) => {
+    action();
+    setMessage(text);
+    if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    messageTimerRef.current = setTimeout(() => setMessage(''), 1800);
+  }, []);
 
-  const currentSection = useMemo(() => {
-    if (section === 'theme') return (
-      <SettingCard title="Color theme" hint="A complete canvas, text and accent system" icon={Palette}>
+  const resetAppearance = () => notify('Appearance restored to defaults', appearance.resetAppearance);
+  const selectedSurface = appearance.surfaces.find((item) => item.id === appearance.preferences.surfaceStyle)!;
+  const selectedFont = appearance.fonts.find((item) => item.id === appearance.preferences.fontStyle)!;
+  const darkMode = appearance.preset.base === 'dark';
+
+  let sectionContent: React.ReactNode;
+
+  if (section === 'theme') {
+    sectionContent = (
+      <SettingCard title="Choose a palette" hint={appearance.preset.tagline} icon={Palette}>
+        <ColorModeControl
+          darkMode={darkMode}
+          onSelectDark={() => { if (!darkMode) notify('Dark mode restored', appearance.toggleColorMode); }}
+          onSelectLight={() => { if (darkMode) notify('Light mode restored', appearance.toggleColorMode); }}
+        />
         {(['dark', 'light'] as const).map((mode) => (
           <div key={mode} className="mt-4 first:mt-0">
-            <p className="mb-2 text-[10px] font-black uppercase tracking-[.18em] text-text-faint">{mode}</p>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="mb-2 flex items-center gap-2">
+              <p className="text-[10px] font-black uppercase tracking-[.18em] text-text-faint">{mode}</p>
+              <span className="h-px flex-1 bg-line" />
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {appearance.presets.filter((preset) => preset.base === mode).map((preset) => {
                 const active = preset.id === appearance.preset.id;
                 return (
-                  <button key={preset.id} aria-pressed={active} onClick={() => notify(`${preset.name} applied`, () => appearance.setPresetId(preset.id))} className={`surface-interactive rounded-2xl p-2.5 text-left cursor-pointer ${active ? 'surface-inset ring-1 ring-accent-1/60' : 'surface-card'}`}>
-                    <span className="block rounded-xl border border-white/10 p-3" style={{ background: preset.ink0, color: preset.textHi }}>
-                      <span className="flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-lg" style={{ background: preset.ink1 }}>Aa</span><span className="min-w-0 flex-1"><span className="block h-1.5 w-full rounded-full" style={{ background: preset.textMid }} /><span className="mt-2 flex gap-1">{[preset.accent1,preset.accent2,preset.accent3].map((color) => <span key={color} className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />)}</span></span></span>
+                  <button
+                    key={preset.id}
+                    type="button"
+                    aria-label={`${preset.name}. ${preset.tagline}`}
+                    aria-pressed={active}
+                    onClick={() => notify(`${preset.name} applied`, () => appearance.setPresetId(preset.id))}
+                    className={`surface-interactive min-w-0 rounded-2xl p-2 text-left cursor-pointer ${active ? 'surface-inset ring-2 ring-accent-1/70' : 'surface-card'}`}
+                  >
+                    <span className="block h-16 rounded-xl border border-white/10 p-2.5" style={{ background: preset.ink0, color: preset.textHi }}>
+                      <span className="flex h-full items-center gap-2">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-sm" style={{ background: preset.ink1 }}>Aa</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block h-1.5 w-full rounded-full" style={{ background: preset.textMid }} />
+                          <span className="mt-2 flex gap-1">
+                            {[preset.accent1, preset.accent2, preset.accent3].map((color) => <span key={color} className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />)}
+                          </span>
+                        </span>
+                      </span>
                     </span>
-                    <span className="mt-2 flex items-center justify-between gap-2 px-1"><span className="truncate text-xs font-black text-text-hi">{preset.name} {preset.emoji}</span>{active && <Check className="h-4 w-4 text-accent-1" />}</span>
+                    <span className="mt-2 flex min-w-0 items-center gap-1.5 px-0.5">
+                      <span className="min-w-0 flex-1 truncate text-[11px] font-black text-text-hi sm:text-xs">{preset.name} {preset.emoji}</span>
+                      <SelectionMark active={active} />
+                    </span>
                   </button>
                 );
               })}
@@ -77,73 +151,189 @@ export default function AppearanceSettings({ onClose }: { onClose: () => void })
         ))}
       </SettingCard>
     );
-    if (section === 'surface') return (
-      <SettingCard title="Surface depth" hint="Changes every card, control, drawer and input" icon={Layers3}>
-        <div className="grid gap-3 sm:grid-cols-3">
+  } else if (section === 'surface') {
+    sectionContent = (
+      <SettingCard title="Choose depth" hint="Compare the same control in three surface systems" icon={Layers3}>
+        <div className="grid grid-cols-3 gap-2">
           {appearance.surfaces.map((surface) => {
             const active = appearance.preferences.surfaceStyle === surface.id;
-            return <button key={surface.id} aria-pressed={active} onClick={() => notify(`${surface.name} surfaces applied`, () => appearance.setSurfaceStyle(surface.id))} className={`rounded-2xl p-3 text-left cursor-pointer ${active ? 'surface-inset ring-1 ring-accent-2/60' : 'surface-card surface-interactive'}`}>
-              <span className="surface-inset grid h-20 place-items-center rounded-xl"><span className="grid h-10 w-24 place-items-center rounded-xl bg-surface text-xs font-black text-text-hi" style={surfacePreviewStyle(surface.id)}>Button</span></span>
-              <span className="mt-3 block text-sm font-black text-text-hi">{surface.name}</span><span className="mt-1 block text-xs leading-relaxed text-text-low">{surface.description}</span>
-            </button>;
+            return (
+              <button
+                key={surface.id}
+                type="button"
+                aria-label={`${surface.name}. ${surface.description}`}
+                aria-pressed={active}
+                onClick={() => notify(`${surface.name} surfaces applied`, () => appearance.setSurfaceStyle(surface.id))}
+                className={`surface-interactive min-w-0 rounded-2xl p-2 text-center cursor-pointer ${active ? 'surface-inset ring-2 ring-accent-2/70' : 'surface-card'}`}
+              >
+                <span className="surface-inset grid h-16 place-items-center rounded-xl">
+                  <span className="grid h-8 w-14 place-items-center rounded-lg bg-surface text-[9px] font-black text-text-hi sm:h-9 sm:w-20 sm:text-[10px]" style={surfacePreviewStyle(surface.id)}>Button</span>
+                </span>
+                <span className="mt-2 flex min-w-0 items-center justify-center gap-1">
+                  <span className="truncate text-[10px] font-black text-text-hi sm:text-xs">{surface.name}</span>
+                  {active && <Check className="h-3.5 w-3.5 shrink-0 text-accent-2" strokeWidth={3} />}
+                </span>
+              </button>
+            );
           })}
         </div>
+        <SelectedSummary label={selectedSurface.name} text={selectedSurface.description} accent="text-accent-2" />
       </SettingCard>
     );
-    if (section === 'background') return (
-      <SettingCard title="Background atmosphere" hint="A quiet pattern beneath the working surfaces" icon={Grid3X3}>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+  } else if (section === 'background') {
+    sectionContent = (
+      <SettingCard title="Choose a pattern" hint="Quiet enough to keep financial information dominant" icon={Grid3X3}>
+        <div className="grid grid-cols-3 gap-2">
           {appearance.patterns.map((pattern) => {
             const active = appearance.preferences.pattern === pattern.id;
-            return <button key={pattern.id} aria-pressed={active} onClick={() => notify(`${pattern.name} background applied`, () => appearance.setPattern(pattern.id))} className={`rounded-2xl p-2.5 cursor-pointer ${active ? 'surface-inset ring-1 ring-accent-3/60' : 'surface-card surface-interactive'}`}><span className="block h-20 rounded-xl bg-surface-deep" style={patternStyle(pattern.id)} /><span className="mt-2 block truncate text-xs font-black text-text-hi">{pattern.name}</span></button>;
+            return (
+              <button
+                key={pattern.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => notify(`${pattern.name} background applied`, () => appearance.setPattern(pattern.id))}
+                className={`surface-interactive min-w-0 rounded-2xl p-2 cursor-pointer ${active ? 'surface-inset ring-2 ring-accent-3/70' : 'surface-card'}`}
+              >
+                <span className="block aspect-[4/3] rounded-xl bg-surface-deep" style={patternStyle(pattern.id)} />
+                <span className="mt-2 flex min-w-0 items-center justify-center gap-1">
+                  <span className="truncate text-[10px] font-black text-text-hi sm:text-xs">{pattern.name}</span>
+                  {active && <Check className="h-3.5 w-3.5 shrink-0 text-accent-3" strokeWidth={3} />}
+                </span>
+              </button>
+            );
           })}
         </div>
       </SettingCard>
     );
-    if (section === 'typeface') return (
-      <SettingCard title="Typeface" hint="Amounts remain tabular and readable in every style" icon={Type}>
-        <div className="grid gap-2 sm:grid-cols-2">
+  } else if (section === 'typeface') {
+    sectionContent = (
+      <SettingCard title="Choose a typeface" hint="Every tile is a live specimen" icon={Type}>
+        <div className="grid grid-cols-2 gap-2">
           {appearance.fonts.map((font) => {
             const active = appearance.preferences.fontStyle === font.id;
-            return <button key={font.id} aria-pressed={active} onClick={() => notify(`${font.name} applied`, () => appearance.setFontStyle(font.id))} className={`rounded-2xl px-4 py-3 text-left cursor-pointer ${active ? 'surface-inset ring-1 ring-accent-2/60' : 'surface-card surface-interactive'}`}><span className="flex items-center justify-between gap-2"><span className="truncate text-lg text-text-hi" style={{ fontFamily: fontVars[font.id] }}>{font.name}</span>{active && <Check className="h-4 w-4 text-accent-2" />}</span><span className="mt-1 block text-[10px] font-bold uppercase tracking-wider text-text-faint">{font.family}</span><span className="mt-1 block text-xs text-text-low">{font.description}</span></button>;
+            return (
+              <button
+                key={font.id}
+                type="button"
+                aria-label={`${font.name}. ${font.description}`}
+                aria-pressed={active}
+                onClick={() => notify(`${font.name} applied`, () => appearance.setFontStyle(font.id))}
+                className={`surface-interactive min-h-[76px] min-w-0 rounded-2xl p-3 text-left cursor-pointer ${active ? 'surface-inset ring-2 ring-accent-2/70' : 'surface-card'}`}
+              >
+                <span className="flex min-w-0 items-start gap-2">
+                  <span className="min-w-0 flex-1 truncate text-[14px] leading-tight text-text-hi sm:text-base" style={{ fontFamily: fontVars[font.id] }}>{font.name}</span>
+                  <SelectionMark active={active} color="text-accent-2" />
+                </span>
+                <span className="mt-2 block truncate text-[9px] font-bold uppercase tracking-wider text-text-faint">{font.family}</span>
+              </button>
+            );
           })}
         </div>
+        <SelectedSummary label={selectedFont.name} text={selectedFont.description} accent="text-accent-2" />
       </SettingCard>
     );
-    return (
-      <SettingCard title="Motion and mode" hint="Comfort controls for the whole interface" icon={WandSparkles}>
-        <button onClick={() => notify('Color mode switched', appearance.toggleColorMode)} className="surface-card surface-interactive flex min-h-16 w-full items-center gap-3 rounded-2xl px-4 text-left cursor-pointer"><span className="surface-inset grid h-10 w-10 place-items-center rounded-xl">{appearance.preset.base === 'dark' ? <Sun className="h-5 w-5 text-accent-warm" /> : <MoonStar className="h-5 w-5 text-accent-1" />}</span><span className="min-w-0 flex-1"><span className="block text-sm font-black text-text-hi">Switch to {appearance.preset.base === 'dark' ? 'light' : 'dark'}</span><span className="block text-xs text-text-low">Returns to your last-used preset in that mode</span></span></button>
-        <button aria-pressed={appearance.preferences.reducedMotion} onClick={() => notify(appearance.preferences.reducedMotion ? 'Full motion restored' : 'Motion reduced', () => appearance.setReducedMotion(!appearance.preferences.reducedMotion))} className="surface-card surface-interactive mt-3 flex min-h-16 w-full items-center gap-3 rounded-2xl px-4 text-left cursor-pointer"><span className={`grid h-6 w-11 shrink-0 rounded-full p-1 transition-colors ${appearance.preferences.reducedMotion ? 'bg-accent-1' : 'bg-surface-deep'}`}><span className={`h-4 w-4 rounded-full bg-white transition-transform ${appearance.preferences.reducedMotion ? 'translate-x-5' : ''}`} /></span><span><span className="block text-sm font-black text-text-hi">Reduce motion</span><span className="block text-xs text-text-low">System reduced-motion preferences are always respected</span></span></button>
+  } else {
+    sectionContent = (
+      <SettingCard title="Motion comfort" hint="Movement preferences apply everywhere" icon={WandSparkles}>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={appearance.preferences.reducedMotion}
+          onClick={() => notify(appearance.preferences.reducedMotion ? 'Full motion restored' : 'Motion reduced', () => appearance.setReducedMotion(!appearance.preferences.reducedMotion))}
+          className="surface-card surface-interactive flex min-h-[72px] w-full items-center gap-3 rounded-2xl px-4 text-left cursor-pointer"
+        >
+          <span className={`grid h-7 w-12 shrink-0 rounded-full p-1 transition-colors ${appearance.preferences.reducedMotion ? 'bg-accent-1' : 'bg-surface-deep'}`}>
+            <span className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${appearance.preferences.reducedMotion ? 'translate-x-5' : ''}`} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-black text-text-hi">Reduce motion</span>
+            <span className="mt-0.5 block text-xs leading-relaxed text-text-low">Minimizes interface movement. Your device preference is always honored.</span>
+          </span>
+        </button>
       </SettingCard>
     );
-  }, [appearance, section]);
+  }
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-hidden bg-canvas text-text-hi">
+    <div role="dialog" aria-modal="true" aria-labelledby="appearance-title" className="fixed inset-0 z-[100] overflow-hidden bg-canvas text-text-hi">
       <div aria-hidden className="absolute inset-0 bg-[image:var(--theme-pattern-image)] bg-[size:var(--theme-pattern-size)]" />
       <div className="relative flex h-full flex-col">
-        <header className="surface-card z-20 flex min-h-[calc(4.25rem+env(safe-area-inset-top))] shrink-0 items-end justify-between gap-3 rounded-none border-x-0 border-t-0 px-4 pb-3 pt-[env(safe-area-inset-top)] md:px-6">
-          <div className="flex min-w-0 items-center gap-3"><AppButton size="icon" variant="ghost" onClick={onClose} aria-label="Close appearance settings"><ArrowLeft className="h-5 w-5" /></AppButton><div className="min-w-0"><p className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[.18em] text-accent-1"><Sparkles className="h-3 w-3" /> Appearance</p><h1 className="truncate text-lg font-black text-text-hi">Theme & interface</h1></div></div>
-          <span aria-live="polite" className={`hidden rounded-full px-3 py-1 text-xs font-bold text-accent-2 surface-inset sm:block ${message ? 'opacity-100' : 'opacity-0'}`}>{message || 'Updated'}</span>
+        <header className="surface-card z-20 flex min-h-[calc(4rem+env(safe-area-inset-top))] shrink-0 items-end justify-between gap-2 rounded-none border-x-0 border-t-0 px-3 pb-2.5 pt-[env(safe-area-inset-top)] md:px-6 md:pb-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <AppButton size="icon" variant="ghost" onClick={onClose} aria-label="Close appearance settings"><ArrowLeft className="h-5 w-5" /></AppButton>
+            <div className="min-w-0">
+              <h1 id="appearance-title" className="truncate text-base font-black text-text-hi md:text-lg">Appearance</h1>
+              <p className="truncate text-[11px] font-semibold text-text-low">{appearance.preset.name} · {selectedSurface.name}</p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <span aria-live="polite" className={`hidden rounded-full px-3 py-1 text-xs font-bold text-accent-2 surface-inset md:block ${message ? 'opacity-100' : 'opacity-0'}`}>{message}</span>
+            <AppButton variant="ghost" size="standard" className="px-3 md:hidden" onClick={resetAppearance} aria-label="Reset appearance to defaults">
+              <RotateCcw className="h-4 w-4" />
+              <span className="hidden min-[360px]:inline">Reset</span>
+            </AppButton>
+          </div>
         </header>
 
         <div className="min-h-0 flex-1 md:grid md:grid-cols-[220px_1fr]">
           <aside className="surface-card z-10 hidden rounded-none border-y-0 border-l-0 p-4 md:flex md:flex-col">
             <p className="px-3 py-2 text-[10px] font-black uppercase tracking-[.2em] text-text-faint">Settings</p>
-            <nav className="space-y-1">{sections.map((item) => { const Icon = item.icon; return <button key={item.id} onClick={() => setSection(item.id)} className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-xs font-black cursor-pointer ${section === item.id ? 'surface-inset text-accent-1' : 'text-text-low hover:text-text-hi'}`}><Icon className="h-4 w-4" />{item.label}</button>; })}</nav>
-            <AppButton variant="ghost" className="mt-auto" onClick={() => notify('Appearance reset', appearance.resetAppearance)}><RotateCcw className="h-4 w-4" /> Reset appearance</AppButton>
+            <nav aria-label="Appearance sections" className="space-y-1">
+              {sections.map((item) => {
+                const Icon = item.icon;
+                const active = section === item.id;
+                return (
+                  <button key={item.id} type="button" aria-current={active ? 'page' : undefined} onClick={() => setSection(item.id)} className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-xs font-black cursor-pointer ${active ? 'surface-inset text-accent-1' : 'text-text-mid hover:text-text-hi'}`}>
+                    <Icon className="h-4 w-4" />{item.label}
+                  </button>
+                );
+              })}
+            </nav>
+            <AppButton variant="ghost" className="mt-auto" onClick={resetAppearance}><RotateCcw className="h-4 w-4" /> Reset appearance</AppButton>
           </aside>
 
           <main className="flex min-h-0 flex-col">
-            <nav className="no-scrollbar surface-card z-10 flex shrink-0 gap-2 overflow-x-auto rounded-none border-x-0 px-3 py-2 md:hidden">{sections.map((item) => { const Icon = item.icon; return <button key={item.id} onClick={() => setSection(item.id)} className={`flex min-h-10 shrink-0 items-center gap-2 rounded-full px-3 text-xs font-black cursor-pointer ${section === item.id ? 'surface-inset text-accent-1' : 'text-text-low'}`}><Icon className="h-3.5 w-3.5" />{item.label}</button>; })}</nav>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-[calc(2rem+env(safe-area-inset-bottom))] md:p-8">
+            <nav aria-label="Appearance sections" className="surface-card z-10 grid shrink-0 grid-cols-5 gap-1 rounded-none border-x-0 px-1.5 py-1.5 md:hidden">
+              {sections.map((item) => {
+                const Icon = item.icon;
+                const active = section === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    aria-current={active ? 'page' : undefined}
+                    onClick={() => setSection(item.id)}
+                    className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 [font-family:var(--font-inter)] text-[9px] font-bold leading-none cursor-pointer min-[360px]:text-[10px] ${active ? 'surface-inset text-accent-1' : 'text-text-mid'}`}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" strokeWidth={active ? 2.5 : 2} />
+                    <span className="block max-w-full truncate">{item.mobileLabel}</span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4 md:p-8">
               <div className="mx-auto max-w-4xl">
-                <div className="mb-5"><p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[.16em] text-accent-1"><ActiveIcon className="h-4 w-4" /> Personalize</p><h2 className="mt-1 text-2xl font-black text-text-hi">{activeMeta.label}</h2><p className="mt-1 text-sm text-text-low">Changes apply instantly across every trip screen.</p></div>
-                {currentSection}
-                <div className="mt-4 md:hidden"><AppButton variant="ghost" fullWidth onClick={() => notify('Appearance reset', appearance.resetAppearance)}><RotateCcw className="h-4 w-4" /> Reset appearance</AppButton></div>
+                <div className="mb-3 flex items-center gap-3 md:mb-5">
+                  <span className="surface-inset grid h-10 w-10 shrink-0 place-items-center rounded-xl text-accent-1"><ActiveIcon className="h-5 w-5" /></span>
+                  <div className="min-w-0">
+                    <h2 className="text-xl font-black leading-tight text-text-hi md:text-2xl">{activeMeta.label}</h2>
+                    <p className="mt-0.5 text-xs text-text-low md:text-sm">{activeMeta.hint}</p>
+                  </div>
+                </div>
+                {sectionContent}
               </div>
             </div>
           </main>
+        </div>
+
+        <div aria-live="polite" role="status" className={`pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-30 flex justify-center px-4 transition-all duration-200 md:hidden ${message ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'}`}>
+          {message ? (
+            <span className="surface-card-strong flex min-h-10 max-w-full items-center gap-2 rounded-full px-4 text-xs font-bold text-text-hi shadow-lg">
+              <Check className="h-4 w-4 shrink-0 text-accent-2" strokeWidth={3} />
+              <span className="truncate">{message}</span>
+            </span>
+          ) : null}
         </div>
       </div>
     </div>
@@ -151,5 +341,55 @@ export default function AppearanceSettings({ onClose }: { onClose: () => void })
 }
 
 function SettingCard({ title, hint, icon: Icon, children }: { title: string; hint: string; icon: typeof Palette; children: React.ReactNode }) {
-  return <section className="surface-card-strong rounded-3xl p-4 sm:p-5"><div className="mb-4 flex items-start gap-3"><span className="surface-inset grid h-10 w-10 shrink-0 place-items-center rounded-xl text-accent-1"><Icon className="h-5 w-5" /></span><div><h3 className="text-sm font-black text-text-hi">{title}</h3><p className="mt-0.5 text-xs text-text-low">{hint}</p></div></div>{children}</section>;
+  return (
+    <section className="surface-card-strong rounded-2xl p-3.5 sm:rounded-3xl sm:p-5">
+      <div className="mb-3 flex items-start gap-2.5 sm:mb-4 sm:gap-3">
+        <span className="surface-inset grid h-9 w-9 shrink-0 place-items-center rounded-xl text-accent-1 sm:h-10 sm:w-10"><Icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
+        <div className="min-w-0">
+          <h3 className="text-sm font-black text-text-hi">{title}</h3>
+          <p className="mt-0.5 text-xs leading-relaxed text-text-low">{hint}</p>
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function SelectedSummary({ label, text, accent }: { label: string; text: string; accent: string }) {
+  return (
+    <div className="surface-inset mt-3 flex items-start gap-2.5 rounded-xl px-3 py-2.5">
+      <Check className={`mt-0.5 h-4 w-4 shrink-0 ${accent}`} strokeWidth={3} />
+      <div className="min-w-0">
+        <p className="text-xs font-black text-text-hi">{label} selected</p>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-text-low">{text}</p>
+      </div>
+    </div>
+  );
+}
+
+function ColorModeControl({ darkMode, onSelectDark, onSelectLight }: { darkMode: boolean; onSelectDark: () => void; onSelectLight: () => void }) {
+  return (
+    <div className="mb-4">
+      <p className="mb-2 text-[10px] font-black uppercase tracking-[.16em] text-text-faint">Color mode</p>
+      <div className="surface-inset grid grid-cols-2 gap-1 rounded-2xl p-1">
+        <button
+          type="button"
+          aria-pressed={darkMode}
+          onClick={onSelectDark}
+          className={`flex min-h-11 items-center justify-center gap-2 rounded-xl text-xs font-black cursor-pointer ${darkMode ? 'surface-card text-text-hi ring-1 ring-accent-1/50' : 'text-text-low'}`}
+        >
+          <MoonStar className="h-4 w-4" /> Dark
+        </button>
+        <button
+          type="button"
+          aria-pressed={!darkMode}
+          onClick={onSelectLight}
+          className={`flex min-h-11 items-center justify-center gap-2 rounded-xl text-xs font-black cursor-pointer ${!darkMode ? 'surface-card text-text-hi ring-1 ring-accent-warm/50' : 'text-text-low'}`}
+        >
+          <Sun className="h-4 w-4" /> Light
+        </button>
+      </div>
+      <p className="mt-2 text-[11px] leading-relaxed text-text-low">Switches to your last selected {darkMode ? 'light' : 'dark'} palette.</p>
+    </div>
+  );
 }
