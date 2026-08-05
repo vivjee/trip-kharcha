@@ -419,10 +419,6 @@ export default function Home() {
 
   const handleOpenSettleUpWithDebt = (debt?: SimplifiedDebt) => {
     const targetDebt = debt || simplifiedDebts[0];
-    if (!targetDebt) {
-      showToast('Everyone is already settled up');
-      return;
-    }
     setSettlementToEdit(undefined);
     setPresetDebt(targetDebt);
     setIsSettleUpOpen(true);

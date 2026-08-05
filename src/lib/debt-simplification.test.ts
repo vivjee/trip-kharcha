@@ -72,6 +72,45 @@ test('settlements change net balances without corrupting expense totals', () => 
   assert.deepEqual(getSettlementProgress(trip), { recorded: 30, pending: 30, percentage: 50 });
 });
 
+test('a voluntary payment creates a matching obligation from receiver to payer', () => {
+  const payment = {
+    id: 's-voluntary',
+    fromParticipantId: 'a',
+    toParticipantId: 'b',
+    amount: 25,
+    date: '2026-08-01',
+  };
+  const afterPayment = makeTrip([], [payment]);
+
+  assert.deepEqual(calculateParticipantBalances(afterPayment).map((balance) => [balance.participantId, balance.netBalance]), [
+    ['a', 25],
+    ['b', -25],
+    ['c', 0],
+  ]);
+  assert.deepEqual(calculateSimplifiedDebts(afterPayment).map((debt) => [debt.from.id, debt.to.id, debt.amount]), [
+    ['b', 'a', 25],
+  ]);
+
+  const repaid = makeTrip([], [
+    payment,
+    { id: 's-repay', fromParticipantId: 'b', toParticipantId: 'a', amount: 25, date: '2026-08-02' },
+  ]);
+  assert.deepEqual(calculateSimplifiedDebts(repaid), []);
+});
+
+test('paying beyond an outstanding debt creates only the surplus obligation in reverse', () => {
+  const expense: Expense = {
+    id: 'e-overpay', title: 'Room', amount: 100, paidById: 'a', includedParticipantIds: ['a', 'b'], category: 'stay', date: '2026-08-01',
+  };
+  const overpaid = makeTrip([expense], [{
+    id: 's-overpay', fromParticipantId: 'b', toParticipantId: 'a', amount: 70, date: '2026-08-02',
+  }]);
+
+  assert.deepEqual(calculateSimplifiedDebts(overpaid).map((debt) => [debt.from.id, debt.to.id, debt.amount]), [
+    ['a', 'b', 20],
+  ]);
+});
+
 test('rounding residue is absorbed before settling two outstanding payments', () => {
   const expense: Expense = {
     id: 'e-rounding',
