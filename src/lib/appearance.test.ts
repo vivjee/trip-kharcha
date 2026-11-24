@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULT_APPEARANCE, getThemePreset, normalizeAppearance, parseStoredAppearance } from './appearance.ts';
 
-test('appearance defaults are the readable dark luxury selection', () => {
+test('appearance defaults are the calm default appearance', () => {
   assert.deepEqual(parseStoredAppearance(null), DEFAULT_APPEARANCE);
-  assert.equal(getThemePreset(DEFAULT_APPEARANCE.presetId).name, 'Slate Pro');
-  assert.equal(DEFAULT_APPEARANCE.surfaceStyle, 'material');
-  assert.equal(DEFAULT_APPEARANCE.pattern, 'mesh');
+  assert.equal(getThemePreset(DEFAULT_APPEARANCE.presetId).name, 'Midnight Ink');
+  assert.equal(DEFAULT_APPEARANCE.surfaceStyle, 'neumorphic');
+  assert.equal(DEFAULT_APPEARANCE.pattern, 'none');
+  assert.equal(DEFAULT_APPEARANCE.fontStyle, 'default');
 });
 
 test('appearance normalization preserves valid independent axes', () => {

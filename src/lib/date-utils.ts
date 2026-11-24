@@ -47,8 +47,8 @@ export function parseLocalDate(dateString?: string): Date {
 export function getTripDurationInDays(trip: Trip): number {
   const start = parseLocalDate(trip.startDate || trip.createdAt);
   const end = parseLocalDate(trip.status === 'completed' && trip.endDate ? trip.endDate : getTodayLocalDate());
-  const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
-  const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+  const startDay = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+  const endDay = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
   return Math.max(1, Math.floor((endDay - startDay) / DAY_MS) + 1);
 }
 

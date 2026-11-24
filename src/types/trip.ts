@@ -57,6 +57,31 @@ export interface Settlement {
   createdByParticipantId?: string;
 }
 
+export type TripType = 'day_hike' | 'night_camp' | 'short_trek' | 'long_trek';
+
+export type ChecklistCategory =
+  | 'wearables'
+  | 'essentials'
+  | 'electronics'
+  | 'health'
+  | 'first_aid'
+  | 'food'
+  | 'hi_protein'
+  | 'utensils'
+  | 'lodging'
+  | 'apps_tech'
+  | 'other';
+
+export interface ChecklistItem {
+  id: string;
+  name: string;
+  category: ChecklistCategory;
+  quantity?: string;
+  isChecked: boolean;
+  assignedToParticipantId?: string;
+  isCustom?: boolean;
+}
+
 export type AuditActionType =
   | 'ADD_EXPENSE'
   | 'EDIT_EXPENSE'
@@ -70,10 +95,15 @@ export type AuditActionType =
   | 'CLAIM_IDENTITY'
   | 'CREATE_TRIP'
   | 'UPDATE_TRIP'
+  | 'START_TRIP'
   | 'COMPLETE_TRIP'
   | 'REOPEN_TRIP'
   | 'UPDATE_COVER'
-  | 'IMPORT_TRIP';
+  | 'IMPORT_TRIP'
+  | 'ADD_CHECKLIST_ITEM'
+  | 'RESET_CHECKLIST'
+  | 'COMPLETE_PACKING'
+  | 'REOPEN_PACKING';
 
 export interface AuditLogEntry {
   id: string;
@@ -100,7 +130,10 @@ export interface Trip {
   participants: Participant[];
   expenses: Expense[];
   settlements: Settlement[];
-  status: 'active' | 'completed';
+  status: 'planning' | 'active' | 'completed';
+  tripType?: TripType;
+  checklist?: ChecklistItem[];
+  isPackingComplete?: boolean;
   startDate: string;
   endDate?: string;
   createdAt: string;

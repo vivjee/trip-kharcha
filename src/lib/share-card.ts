@@ -1,116 +1,166 @@
-'use client';
-
-import { formatDateRange } from '@/lib/date-utils';
-import { getTripStats } from '@/lib/debt-simplification';
-import { loadStoredPhoto } from '@/lib/image-storage';
-import { SimplifiedDebt, Trip } from '@/types/trip';
-
-const canvasBlob = (canvas: HTMLCanvasElement) => new Promise<Blob>((resolve, reject) => {
-  canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Unable to create share card.')), 'image/png');
-});
-
-const drawRoundedRect = (context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) => {
-  context.beginPath();
-  context.roundRect(x, y, width, height, radius);
-  context.fill();
-};
-
-const loadBlobImage = (blob: Blob) => new Promise<HTMLImageElement>((resolve, reject) => {
-  const url = URL.createObjectURL(blob);
-  const image = new Image();
-  image.onload = () => {
-    URL.revokeObjectURL(url);
-    resolve(image);
-  };
-  image.onerror = () => {
-    URL.revokeObjectURL(url);
-    reject(new Error('The trip cover could not be added to the share card.'));
-  };
-  image.src = url;
-});
-
-async function drawCover(context: CanvasRenderingContext2D, trip: Trip) {
-  if (!trip.coverPhotoId) return false;
-  const blob = await loadStoredPhoto(trip.coverPhotoId);
-  if (!blob) return false;
-  const image = await loadBlobImage(blob);
-  const targetWidth = 1080;
-  const targetHeight = 520;
-  const scale = Math.max(targetWidth / image.naturalWidth, targetHeight / image.naturalHeight);
-  const width = image.naturalWidth * scale;
-  const height = image.naturalHeight * scale;
-  context.drawImage(image, (targetWidth - width) / 2, (targetHeight - height) / 2, width, height);
-  return true;
+"use client";
+import { formatDateRange } from "@/lib/date-utils";
+import { getTripStats } from "@/lib/debt-simplification";
+import { formatMoney } from "@/lib/money";
+import { loadStoredPhoto } from "@/lib/image-storage";
+import type { SimplifiedDebt, Trip } from "@/types/trip";
+const canvasBlob = (canvas: HTMLCanvasElement) =>
+  new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob(
+      (b) =>
+        b ? resolve(b) : reject(new Error("Unable to create summary image.")),
+      "image/png",
+    ),
+  );
+function lines(ctx: CanvasRenderingContext2D, text: string, width: number) {
+  const rows: string[] = [];
+  let line = "";
+  for (const char of text) {
+    if (line && ctx.measureText(line + char).width > width) {
+      rows.push(line);
+      line = "";
+    }
+    line += char;
+  }
+  if (line) rows.push(line);
+  return rows;
 }
-
-export async function createShareCard(trip: Trip, debts: SimplifiedDebt[]): Promise<Blob> {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1080;
-  canvas.height = 1350;
-  const context = canvas.getContext('2d');
-  if (!context) throw new Error('Share cards are unavailable on this device.');
+async function cover(trip: Trip) {
+  const blob = await loadStoredPhoto(trip.coverPhotoId);
+  if (!blob) return undefined;
+  const url = URL.createObjectURL(blob);
+  try {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    return image;
+  } catch {
+    return undefined;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+export async function createShareCards(
+  trip: Trip,
+  debts: SimplifiedDebt[],
+): Promise<Blob[]> {
+  const image = await cover(trip);
   const stats = getTripStats(trip);
-
-  const background = context.createLinearGradient(0, 0, 1080, 1350);
-  background.addColorStop(0, trip.accentColor || '#312e81');
-  background.addColorStop(0.55, '#111827');
-  background.addColorStop(1, '#020617');
-  context.fillStyle = background;
-  context.fillRect(0, 0, 1080, 1350);
-
-  const hasCover = await drawCover(context, trip);
-  if (hasCover) {
-    const overlay = context.createLinearGradient(0, 0, 0, 560);
-    overlay.addColorStop(0, 'rgba(2, 6, 23, 0.12)');
-    overlay.addColorStop(1, 'rgba(2, 6, 23, 1)');
-    context.fillStyle = overlay;
-    context.fillRect(0, 0, 1080, 570);
-  }
-
-  context.fillStyle = '#ffffff';
-  context.font = '800 62px Arial, sans-serif';
-  context.fillText(trip.name.slice(0, 28), 72, 160);
-  context.fillStyle = '#c7d2fe';
-  context.font = '600 28px Arial, sans-serif';
-  context.fillText(`${formatDateRange(trip)} · ${trip.participants.length} members`, 72, 210);
-
-  context.fillStyle = 'rgba(255,255,255,0.1)';
-  drawRoundedRect(context, 60, 560, 960, 230, 34);
-  context.fillStyle = '#a5b4fc';
-  context.font = '700 24px Arial, sans-serif';
-  context.fillText('TOTAL SPENT', 100, 625);
-  context.fillStyle = '#ffffff';
-  context.font = '900 76px Arial, sans-serif';
-  context.fillText(`${trip.currencySymbol} ${stats.totalSpent.toLocaleString()}`, 100, 710);
-  context.fillStyle = '#fbbf24';
-  context.font = '700 26px Arial, sans-serif';
-  context.fillText(`${stats.totalExpensesCount} expenses · ${trip.currency}`, 100, 758);
-
-  context.fillStyle = '#ffffff';
-  context.font = '800 34px Arial, sans-serif';
-  context.fillText(debts.length ? 'Payments to settle' : 'Everyone is settled up 🎉', 72, 875);
-
-  if (debts.length) {
-    debts.slice(0, 4).forEach((debt, index) => {
-      const y = 940 + index * 78;
-      context.fillStyle = 'rgba(255,255,255,0.08)';
-      drawRoundedRect(context, 60, y - 45, 960, 64, 18);
-      context.fillStyle = '#e2e8f0';
-      context.font = '700 27px Arial, sans-serif';
-      context.fillText(`${debt.from.name} → ${debt.to.name}`, 92, y);
-      context.fillStyle = '#6ee7b7';
-      context.textAlign = 'right';
-      context.fillText(`${trip.currencySymbol} ${debt.amount.toLocaleString()}`, 980, y);
-      context.textAlign = 'left';
+  const measure = document.createElement("canvas").getContext("2d");
+  if (!measure) throw new Error("Image export unavailable.");
+  measure.font = "24px Arial";
+  const pages: { debt: SimplifiedDebt; label: string[]; height: number }[][] = [
+    [],
+  ];
+  let used = 0;
+  debts.forEach((debt, index) => {
+    const label = lines(
+      measure,
+      `${index + 1}. ${debt.from.name} → ${debt.to.name}`,
+      936,
+    );
+    const height = Math.max(185, label.length * 29 + 84);
+    if (used && used + height > 835) {
+      pages.push([]);
+      used = 0;
+    }
+    pages[pages.length - 1].push({ debt, label, height });
+    used += height + 20;
+  });
+  const blobs: Blob[] = [];
+  for (let page = 0; page < pages.length; page++) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1080;
+    canvas.height = 1600;
+    const c = canvas.getContext("2d");
+    if (!c) throw new Error("Image export unavailable.");
+    c.fillStyle = "#142b2c";
+    c.fillRect(0, 0, 1080, 1600);
+    if (image) {
+      const scale = Math.max(
+        1080 / image.naturalWidth,
+        420 / image.naturalHeight,
+      );
+      c.drawImage(
+        image,
+        (1080 - image.naturalWidth * scale) / 2,
+        (420 - image.naturalHeight * scale) / 2,
+        image.naturalWidth * scale,
+        image.naturalHeight * scale,
+      );
+      c.fillStyle = "rgba(8,23,27,.8)";
+      c.fillRect(0, 0, 1080, 420);
+    }
+    c.fillStyle = "#b9dbcf";
+    c.font = "700 20px Arial";
+    c.fillText(
+      "TRIP CALCULATOR · " + (page + 1) + " / " + pages.length,
+      64,
+      66,
+    );
+    c.fillStyle = "#fff";
+    let titleSize = 40;
+    let titleLines: string[];
+    do {
+      c.font = `700 ${titleSize}px Arial`;
+      titleLines = lines(c, trip.name, 952);
+      if (titleLines.length * (titleSize + 8) <= 228) break;
+      titleSize -= 2;
+    } while (titleSize > 16);
+    titleLines.forEach((line, row) =>
+      c.fillText(line, 64, 135 + row * (titleSize + 8)),
+    );
+    c.fillStyle = "#d2e1dc";
+    c.font = "24px Arial";
+    c.fillText(
+      formatDateRange(trip) +
+        " · " +
+        (trip.participants.length === 1
+          ? "Solo trip"
+          : trip.participants.length + " members"),
+      64,
+      377,
+    );
+    c.fillStyle = "#b9dbcf";
+    c.font = "700 20px Arial";
+    c.fillText("TOTAL SPENT", 64, 470);
+    c.fillStyle = "#fff";
+    c.font = "700 52px Arial";
+    c.fillText(formatMoney(stats.totalSpent, trip.currencySymbol), 64, 535);
+    c.font = "700 28px Arial";
+    c.fillText(
+      debts.length ? "Simplified payments" : "All square. Nothing to pay.",
+      64,
+      604,
+    );
+    let y = 652;
+    pages[page].forEach(({ debt: d, label, height }) => {
+      c.fillStyle = "#203c3d";
+      c.beginPath();
+      c.roundRect(48, y, 984, height, 18);
+      c.fill();
+      c.fillStyle = "#f2f8f5";
+      c.font = "24px Arial";
+      label.forEach((line, row) => c.fillText(line, 72, y + 35 + row * 29));
+      c.fillStyle = "#b1e6ce";
+      c.font = "700 32px Arial";
+      c.fillText(
+        formatMoney(d.amount, trip.currencySymbol),
+        72,
+        y + height - 22,
+      );
+      y += height + 20;
     });
-  } else {
-    context.fillStyle = '#6ee7b7';
-    context.font = '600 28px Arial, sans-serif';
-    context.fillText('No payments are pending for this trip.', 72, 935);
+    c.fillStyle = "#b9dbcf";
+    c.font = "22px Arial";
+    c.fillText(
+      debts.length + " pending payments · All amounts in " + trip.currency,
+      64,
+      1542,
+    );
+    blobs.push(await canvasBlob(canvas));
+    canvas.width = 0;
+    canvas.height = 0;
   }
-
-  context.fillStyle = '#94a3b8';
-  context.font = '700 24px Arial, sans-serif';
-  context.fillText('TRIP CALCULATOR · NEPAL · V2', 72, 1290);
-  return canvasBlob(canvas);
+  return blobs;
 }

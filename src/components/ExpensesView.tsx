@@ -1,200 +1,183 @@
-'use client';
-
-import React, { useState } from 'react';
-import { Trip, Expense } from '@/types/trip';
-import { Plus, Search, Trash2, Calendar, User, Users, Pencil } from 'lucide-react';
-import { formatDateTime, toLocalDateTimeInput } from '@/lib/date-utils';
-import AppButton from '@/components/AppButton';
-
-interface ExpensesViewProps {
-  trip: Trip;
-  onOpenAddExpense: () => void;
-  onEditExpense: (expense: Expense) => void;
-  onDeleteExpense: (expenseId: string) => void;
-}
+"use client";
+import { useMemo, useState } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import type { Trip, Expense } from "@/types/trip";
+import { formatMoney } from "@/lib/money";
+import { getExpenseShares } from "@/lib/debt-simplification";
+import { formatSingleDate } from "@/lib/date-utils";
+import Pagination, { PAGE_SIZE } from "./Pagination";
 
 export default function ExpensesView({
   trip,
   onOpenAddExpense,
   onEditExpense,
   onDeleteExpense,
-}: ExpensesViewProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-
-  const categoryIcons: Record<string, string> = {
-    food: '🍱',
-    transport: '🚕',
-    stay: '🏨',
-    activity: '🪂',
-    shopping: '🛍️',
-    other: '🧾',
-  };
-
-  const getParticipant = (id: string) => trip.participants.find((p) => p.id === id);
-
-  const filteredExpenses = trip.expenses.filter((e) => {
-    const matchesSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || e.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
+}: {
+  trip: Trip;
+  onOpenAddExpense: () => void;
+  onEditExpense: (e: Expense) => void;
+  onDeleteExpense: (id: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("all");
+  const [page, setPage] = useState(0);
+  const filtered = useMemo(
+    () =>
+      trip.expenses
+        .filter(
+          (e) =>
+            (e.title + " " + (e.notes || ""))
+              .toLowerCase()
+              .includes(query.toLowerCase()) &&
+            (category === "all" || e.category === category),
+        )
+        .sort(
+          (a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id),
+        ),
+    [trip.expenses, query, category],
+  );
+  const safePage = Math.min(
+    page,
+    Math.max(0, Math.ceil(filtered.length / PAGE_SIZE) - 1),
+  );
+  const visible = filtered.slice(
+    safePage * PAGE_SIZE,
+    (safePage + 1) * PAGE_SIZE,
+  );
+  const editable = trip.status !== "completed";
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-4 p-4 animate-pop-in md:p-5">
-      {/* Header & Add Button */}
-      <div className="flex items-center justify-between">
+    <div className="tc-view">
+      <div className="tc-page-heading">
         <div>
-          <h2 className="text-base font-black text-slate-900 leading-tight">Trip Expenses</h2>
-          <p className="text-[11px] text-slate-500 font-medium">
-            {trip.expenses.length} recorded {trip.expenses.length === 1 ? 'expense' : 'expenses'}
+          <h1>Expenses</h1>
+          <p>
+            {trip.expenses.length}{" "}
+            {trip.expenses.length === 1 ? "expense" : "expenses"} recorded for
+            this trip.
           </p>
         </div>
-        <AppButton onClick={onOpenAddExpense} size="large">
-          <Plus className="w-4 h-4" />
-          <span>Add expense</span>
-        </AppButton>
+        {editable && (
+          <button className="tc-button primary" onClick={onOpenAddExpense}>
+            <Plus size={18} />
+            Add expense
+          </button>
+        )}
       </div>
-
-      {/* Search & Category Filter */}
-      <div className="space-y-2">
-        <div className="relative">
-          <Search className="absolute left-3.5 top-4 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search expense title..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="app-field min-h-12 w-full pl-10 pr-4 text-sm font-medium focus:outline-none"
-          />
-        </div>
-
-        {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-          {['all', 'food', 'transport', 'stay', 'activity', 'shopping', 'other'].map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`min-h-10 rounded-lg px-3 text-xs font-bold capitalize transition-colors cursor-pointer whitespace-nowrap ${
-                selectedCategory === cat
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              {cat === 'all' ? 'All Items' : `${categoryIcons[cat] || ''} ${cat}`}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Expenses Cards List */}
-      {filteredExpenses.length === 0 ? (
-        <div className="text-center py-10 bg-white rounded-2xl border border-slate-200 p-6">
-          <p className="text-2xl mb-2">🧾</p>
-          <p className="text-xs font-bold text-slate-700">No expenses found</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            {searchQuery || selectedCategory !== 'all'
-              ? 'Try adjusting your search or category filter.'
-              : 'Tap "+ Add Expense" above to log your first expenditure.'}
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-2.5 md:grid-cols-2">
-          {filteredExpenses.map((expense) => {
-              const payer = getParticipant(expense.paidById);
-              const perPerson =
-                expense.includedParticipantIds.length > 0
-                  ? expense.amount / expense.includedParticipantIds.length
-                  : 0;
-
-              return (
-                <div
-                  key={expense.id}
-                  className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all space-y-2"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <div className="w-10 h-10 shrink-0 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-xl shadow-xs">
-                        {categoryIcons[expense.category] || '🧾'}
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="truncate text-sm font-bold text-slate-900 leading-tight">
-                          {expense.title}
-                        </h3>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
-                          <span className="flex items-center gap-0.5 whitespace-nowrap">
-                            <Calendar className="w-3 h-3 text-slate-400" />
-                            {formatDateTime(toLocalDateTimeInput(expense.date, expense.createdAt))}
-                          </span>
-                          <span>•</span>
-                          <span className="capitalize px-1.5 py-0.2 rounded-md bg-slate-100 font-semibold text-slate-700">
-                            {expense.category}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="shrink-0 text-right">
-                      <p className="font-amount whitespace-nowrap text-sm font-black text-slate-900">
-                        {trip.currencySymbol} {expense.amount.toLocaleString()}
-                      </p>
-                      <p className="mt-0.5 whitespace-nowrap text-xs font-semibold text-indigo-600">
-                        {trip.currencySymbol} {Math.round(perPerson).toLocaleString()} / person
-                      </p>
-                    </div>
-                  </div>
-
-                  {expense.notes && (
-                    <p className="line-clamp-2 whitespace-pre-line rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
-                      {expense.notes}
-                    </p>
-                  )}
-
-                  {/* Details Footer: Who Paid & Included Badges */}
-                  <div className="space-y-2 border-t border-slate-100 pt-2 text-xs">
-                    <div className="flex min-w-0 items-center gap-1.5 text-slate-600">
-                      <User className="w-3 h-3 text-indigo-500 flex-shrink-0" />
-                      <span className="truncate">
-                        Paid by{' '}
-                        {expense.payers && expense.payers.length > 0 ? (
-                          <strong className="text-slate-900">
-                            {expense.payers.map(p => {
-                              const part = getParticipant(p.participantId);
-                              return `${part?.name || 'Someone'} (${trip.currencySymbol} ${p.amount.toLocaleString()})`;
-                            }).join(', ')}
-                          </strong>
-                        ) : (
-                          <strong className="text-slate-900">{payer?.avatar} {payer?.name}</strong>
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-end gap-2">
-                      <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500">
-                        <Users className="w-3 h-3" />
-                        {expense.includedParticipantIds.length} members
-                      </span>
-
-                      <AppButton onClick={() => onEditExpense(expense)} size="icon" variant="ghost" aria-label={`Edit ${expense.title}`}>
-                        <Pencil className="w-4 h-4" />
-                      </AppButton>
-                      <AppButton
-                        onClick={() => {
-                          if (window.confirm(`Delete “${expense.title}”? This will recalculate every balance.`)) onDeleteExpense(expense.id);
-                        }}
-                        size="icon"
-                        variant="ghost"
-                        className="text-slate-500 hover:bg-rose-50 hover:text-rose-700"
-                        aria-label={`Delete ${expense.title}`}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </AppButton>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-        </div>
+      {!editable && (
+        <p className="tc-info">
+          This trip is completed. Reopen it in Trip details to change expenses.
+        </p>
       )}
+      <div className="tc-filters">
+        <label className="tc-field">
+          <span className="sr-only">Search expenses</span>
+          <input
+            placeholder="Search expense title..."
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(0);
+            }}
+          />
+        </label>
+        <label className="tc-field">
+          <span className="sr-only">Category</span>
+          <select
+            value={category}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setPage(0);
+            }}
+          >
+            {[
+              "all",
+              "food",
+              "transport",
+              "stay",
+              "activity",
+              "shopping",
+              "other",
+            ].map((c) => (
+              <option key={c} value={c}>
+                {c === "all"
+                  ? "All categories"
+                  : c[0].toUpperCase() + c.slice(1)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <p className="tc-help">{filtered.length} matching expenses</p>
+      {visible.map((e, i) => {
+        const shares = getExpenseShares(e);
+        const amounts = new Set(shares.map((s) => s.amount));
+        const equal = amounts.size === 1;
+        return (
+          <div key={e.id}>
+            {(i === 0 ||
+              visible[i - 1].date.slice(0, 10) !== e.date.slice(0, 10)) && (
+              <h2 className="tc-date-heading">{formatSingleDate(e.date)}</h2>
+            )}
+            <article className="tc-expense">
+              <div className="tc-expense-main">
+                <div>
+                  <span className="tc-eyebrow">{e.category}</span>
+                  <h3>{e.title}</h3>
+                  <p>
+                    {e.payers && e.payers.length > 1
+                      ? e.payers.length + " people paid"
+                      : (trip.participants.find((p) => p.id === e.paidById)
+                          ?.name || "Member") + " paid"}
+                  </p>
+                </div>
+                <strong>{formatMoney(e.amount, trip.currencySymbol)}</strong>
+              </div>
+              <div className="tc-expense-footer">
+                <span>
+                  {equal && shares.length
+                    ? formatMoney(shares[0].amount, trip.currencySymbol) +
+                      " each"
+                    : shares.length +
+                      " shares · " +
+                      (e.splitMode === "equal"
+                        ? "remainder included"
+                        : "custom split")}
+                </span>
+                {editable && (
+                  <div className="tc-actions">
+                    <button
+                      className="tc-icon"
+                      aria-label={"Edit " + e.title}
+                      onClick={() => onEditExpense(e)}
+                    >
+                      <Pencil size={17} />
+                    </button>
+                    <button
+                      className="tc-icon danger"
+                      aria-label={"Delete " + e.title}
+                      onClick={() => {
+                        if (confirm("Delete “" + e.title + "”?"))
+                          onDeleteExpense(e.id);
+                      }}
+                    >
+                      <Trash2 size={17} />
+                    </button>
+                  </div>
+                )}
+              </div>
+              {e.notes && <p className="tc-help">{e.notes}</p>}
+            </article>
+          </div>
+        );
+      })}
+      {!visible.length && (
+        <p className="tc-empty">
+          {trip.expenses.length
+            ? "No expenses match your filters."
+            : "No expenses yet. Add the first one when you are ready."}
+        </p>
+      )}
+      <Pagination page={safePage} count={filtered.length} onChange={setPage} />
     </div>
   );
 }

@@ -1,104 +1,158 @@
-import { Trip, UserProfile } from '@/types/trip';
-import { toLocalDateTimeInput } from '@/lib/date-utils';
+import type { Trip, UserProfile } from "../types/trip.ts";
+import { validateTrip, validateProfile } from "./validation.ts";
 
-const LOCAL_STORAGE_KEY = 'trip_calculator_data_v4_clean_slate';
-const LEGACY_STORAGE_KEYS = ['trip_calculator_data_v3', 'trip_calculator_data_v2', 'trip_calculator_data_v1'];
-const USER_PROFILE_STORAGE_KEY = 'user_profile_data_v1';
-const DATA_VERSION = 2;
-
+export const LOCAL_STORAGE_KEY = "trip_calculator_data_v4_clean_slate";
+export const LEGACY_STORAGE_KEYS = [
+  "trip_calculator_data_v3",
+  "trip_calculator_data_v2",
+  "trip_calculator_data_v1",
+];
+const PROFILE_KEY = "user_profile_data_v1";
 export interface StoredTripData {
-  version: number;
+  version: 3;
+  revision: string;
   trips: Trip[];
   activeTripId: string;
   identityByTripId: Record<string, string>;
+  profile: UserProfile | null;
 }
-
-function migrateTrip(trip: Trip): Trip {
-  const createdAt = trip.createdAt || new Date().toISOString();
-  return {
-    ...trip,
-    coverImageEmoji: trip.coverImageEmoji || '🏔️',
-    createdAt,
-    updatedAt: trip.updatedAt || createdAt,
-    participants: Array.isArray(trip.participants) ? trip.participants : [],
-    expenses: (trip.expenses || []).map((expense) => ({
-      ...expense,
-      date: toLocalDateTimeInput(expense.date, expense.createdAt || createdAt),
-      splitMode: expense.splitMode || 'equal',
-      createdAt: expense.createdAt || createdAt,
-      updatedAt: expense.updatedAt || expense.createdAt || createdAt,
-    })),
-    settlements: (trip.settlements || []).map((settlement) => ({
-      ...settlement,
-      date: toLocalDateTimeInput(settlement.date, settlement.createdAt || createdAt),
-      createdAt: settlement.createdAt || createdAt,
-      updatedAt: settlement.updatedAt || settlement.createdAt || createdAt,
-    })),
-    auditLogs: Array.isArray(trip.auditLogs) ? trip.auditLogs : [],
-  };
-}
-
-export function loadUserProfileFromStorage(): UserProfile | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const data = localStorage.getItem(USER_PROFILE_STORAGE_KEY);
-    return data ? JSON.parse(data) as UserProfile : null;
-  } catch (error) {
-    console.error('Failed to load user profile:', error);
-    return null;
-  }
-}
-
-export function saveUserProfileToStorage(profile: UserProfile): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(profile));
-}
-
-export function loadTripsFromStorage(): StoredTripData {
-  if (typeof window === 'undefined') {
-    return { version: DATA_VERSION, trips: [], activeTripId: '', identityByTripId: {} };
-  }
-
-  try {
-    const current = localStorage.getItem(LOCAL_STORAGE_KEY);
-    const legacy = LEGACY_STORAGE_KEYS.map((key) => localStorage.getItem(key)).find(Boolean);
-    const raw = current || legacy;
-    if (!raw) return { version: DATA_VERSION, trips: [], activeTripId: '', identityByTripId: {} };
-    const parsed = JSON.parse(raw) as Partial<StoredTripData>;
-    const trips = Array.isArray(parsed.trips) ? parsed.trips.map(migrateTrip) : [];
-    const activeTripId = trips.some((trip) => trip.id === parsed.activeTripId) ? parsed.activeTripId || '' : '';
-    const migrated = {
-      version: DATA_VERSION,
-      trips,
-      activeTripId,
-      identityByTripId: parsed.identityByTripId || {},
+export type LoadResult =
+  | {
+      status: "ready" | "empty";
+      data: StoredTripData;
+      raw: string | null;
+      sourceKey: string;
+    }
+  | {
+      status: "recovery";
+      message: string;
+      raw: string | null;
+      sourceKey: string;
     };
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(migrated));
-    return migrated;
+export type SaveResult =
+  | { ok: true; raw: string; data: StoredTripData }
+  | { ok: false; kind: "conflict" | "storage"; message: string };
+export const emptyData = (): StoredTripData => ({
+  version: 3,
+  revision: "",
+  trips: [],
+  activeTripId: "",
+  identityByTripId: {},
+  profile: null,
+});
+export type StoragePort = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+
+export function loadTripsFromStorage(storage?: StoragePort): LoadResult {
+  let raw: string | null = null;
+  let sourceKey = LOCAL_STORAGE_KEY;
+  try {
+    storage = storage ?? localStorage;
+    raw = storage.getItem(sourceKey);
+    if (!raw)
+      for (const key of LEGACY_STORAGE_KEYS) {
+        const value = storage.getItem(key);
+        if (value) {
+          raw = value;
+          sourceKey = key;
+          break;
+        }
+      }
+    const profileRaw = storage.getItem(PROFILE_KEY);
+    if (!raw)
+      return {
+        status: "empty",
+        data: {
+          ...emptyData(),
+          profile: validateProfile(profileRaw ? JSON.parse(profileRaw) : null),
+        },
+        raw,
+        sourceKey,
+      };
+    const parsed = JSON.parse(raw);
+    if (
+      !parsed ||
+      ![1, 2, 3].includes(parsed.version ?? 1) ||
+      !Array.isArray(parsed.trips)
+    )
+      throw new Error("Unsupported or damaged library format.");
+    const trips = parsed.trips.map(validateTrip) as Trip[];
+    if (new Set(trips.map((t) => t.id)).size !== trips.length)
+      throw new Error("Duplicate trip identifiers.");
+    const identities: Record<string, string> = {};
+    for (const trip of trips) {
+      const identity = parsed.identityByTripId?.[trip.id];
+      if (identity && trip.participants.some((p) => p.id === identity))
+        identities[trip.id] = identity;
+    }
+    const data: StoredTripData = {
+      version: 3,
+      revision: parsed.revision || "",
+      trips,
+      activeTripId: trips.some((t) => t.id === parsed.activeTripId)
+        ? parsed.activeTripId
+        : "",
+      identityByTripId: identities,
+      profile: validateProfile(
+        parsed.version === 3
+          ? parsed.profile
+          : profileRaw
+            ? JSON.parse(profileRaw)
+            : null,
+      ),
+    };
+    // Loading never writes, even when migration succeeds.
+    return { status: trips.length ? "ready" : "empty", data, raw, sourceKey };
   } catch (error) {
-    console.error('Failed to load trips:', error);
-    return { version: DATA_VERSION, trips: [], activeTripId: '', identityByTripId: {} };
+    return {
+      status: "recovery",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Device storage could not be read.",
+      raw,
+      sourceKey,
+    };
   }
 }
 
 export function saveTripsToStorage(
-  trips: Trip[],
-  activeTripId: string,
-  identityByTripId: Record<string, string> = {},
-): void {
-  if (typeof window === 'undefined') return;
-  const data: StoredTripData = {
-    version: DATA_VERSION,
-    trips,
-    activeTripId,
-    identityByTripId,
-  };
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
-}
-
-export function clearAllStorageData(): void {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem(LOCAL_STORAGE_KEY);
-  localStorage.removeItem(USER_PROFILE_STORAGE_KEY);
-  LEGACY_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+  data: StoredTripData,
+  expectedRaw: string | null,
+  sourceKey = LOCAL_STORAGE_KEY,
+  storage?: StoragePort,
+): SaveResult {
+  try {
+    storage = storage ?? localStorage;
+    const current = storage.getItem(LOCAL_STORAGE_KEY);
+    const actual =
+      sourceKey === LOCAL_STORAGE_KEY ? current : storage.getItem(sourceKey);
+    if (
+      actual !== expectedRaw ||
+      (sourceKey !== LOCAL_STORAGE_KEY && current !== null)
+    )
+      return {
+        ok: false,
+        kind: "conflict",
+        message:
+          "This library changed in another window. Load the latest version before retrying; your open form will stay here.",
+      };
+    // Retain the exact old envelope before the first migration.
+    if (expectedRaw && (!data.revision || sourceKey !== LOCAL_STORAGE_KEY))
+      storage.setItem(LOCAL_STORAGE_KEY + "_before_migration", expectedRaw);
+    const next: StoredTripData = {
+      ...data,
+      version: 3,
+      revision: crypto.randomUUID(),
+    };
+    const raw = JSON.stringify(next);
+    storage.setItem(LOCAL_STORAGE_KEY, raw);
+    return { ok: true, raw, data: next };
+  } catch {
+    return {
+      ok: false,
+      kind: "storage",
+      message:
+        "Could not save to this device. Storage may be full or unavailable. Your form is still open; free some space and retry.",
+    };
+  }
 }

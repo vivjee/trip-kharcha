@@ -1,4 +1,5 @@
 import type { CategoryType, Expense, Trip } from '../types/trip.ts';
+import { sumMoney } from './money.ts';
 import { parseLocalDate } from './date-utils.ts';
 
 export const CATEGORY_DETAILS: Record<CategoryType, { label: string; icon: string; color: string }> = {
@@ -36,17 +37,20 @@ export interface TripRecap {
   dominantCategory?: RecapCategory;
 }
 
+const recapCache = new WeakMap<Trip['expenses'], TripRecap>();
 export function getTripRecap(trip: Trip): TripRecap {
-  const totalSpent = trip.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const cached = recapCache.get(trip.expenses);
+  if (cached) return cached;
+  const totalSpent = sumMoney(trip.expenses.map(e => e.amount));
   const categoryTotals = new Map<CategoryType, number>();
   const dayTotals = new Map<string, { amount: number; expenseCount: number }>();
 
   let biggestExpense: Expense | undefined;
   trip.expenses.forEach((expense) => {
-    categoryTotals.set(expense.category, (categoryTotals.get(expense.category) || 0) + expense.amount);
+    categoryTotals.set(expense.category, sumMoney([categoryTotals.get(expense.category) || 0, expense.amount]));
     const date = expense.date.slice(0, 10);
     const day = dayTotals.get(date) || { amount: 0, expenseCount: 0 };
-    dayTotals.set(date, { amount: day.amount + expense.amount, expenseCount: day.expenseCount + 1 });
+    dayTotals.set(date, { amount: sumMoney([day.amount, expense.amount]), expenseCount: day.expenseCount + 1 });
     if (!biggestExpense || expense.amount > biggestExpense.amount) biggestExpense = expense;
   });
 
@@ -75,7 +79,7 @@ export function getTripRecap(trip: Trip): TripRecap {
     !highest || day.amount > highest.amount ? day : highest
   ), undefined);
 
-  return {
+  const result = {
     totalSpent,
     categories,
     dailySpending,
@@ -83,6 +87,8 @@ export function getTripRecap(trip: Trip): TripRecap {
     highestSpendDay,
     dominantCategory: categories[0],
   };
+  recapCache.set(trip.expenses, result);
+  return result;
 }
 
 export function getCategoryConicGradient(categories: RecapCategory[]): string {

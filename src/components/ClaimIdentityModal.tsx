@@ -1,5 +1,6 @@
 'use client';
 
+import SaveStatus, { useSaveForm } from './SaveStatus';
 import React, { useState } from 'react';
 import { Trip } from '@/types/trip';
 import { X, UserCheck, CheckCircle2 } from 'lucide-react';
@@ -9,7 +10,7 @@ interface ClaimIdentityModalProps {
   currentParticipantId?: string;
   isOpen: boolean;
   onClose: () => void;
-  onClaimIdentity: (participantId: string) => void;
+  onClaimIdentity: (participantId: string) => Promise<boolean>;
 }
 
 export default function ClaimIdentityModal({
@@ -19,32 +20,32 @@ export default function ClaimIdentityModal({
   onClose,
   onClaimIdentity,
 }: ClaimIdentityModalProps) {
+  const { saving, error, run } = useSaveForm();
   const [selectedId, setSelectedId] = useState<string>(
     currentParticipantId || trip.participants[0]?.id || ''
   );
 
   if (!isOpen) return null;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!selectedId) return;
-    onClaimIdentity(selectedId);
-    onClose();
+    if (await run(() => onClaimIdentity(selectedId))) onClose();
   };
 
   const selectedParticipant = trip.participants.find((p) => p.id === selectedId);
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4 animate-pop-in">
-      <div className="w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
+      <div role="dialog" aria-modal="true" aria-labelledby="claim-identity-title" className="app-modal-sheet w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+        <SaveStatus saving={saving} error={error} />
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-purple-50/70">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-xl bg-purple-100 text-text-hi flex items-center justify-center font-bold">
               <UserCheck className="w-4 h-4" />
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-900">Who Are You On This Trip?</h2>
-              <p className="text-xs text-slate-500 font-medium">Claim your participant identity for the activity log</p>
+              <p className="text-xs text-text-mid font-medium">Choose the member using this device</p>
             </div>
           </div>
           <button
@@ -114,10 +115,10 @@ export default function ClaimIdentityModal({
             <button
               type="button"
               onClick={handleConfirm}
-              className="flex min-h-12 w-2/3 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 text-sm font-extrabold text-white hover:bg-indigo-700 cursor-pointer"
+              className="flex min-h-12 w-2/3 items-center justify-center gap-1.5 rounded-xl tc-selected text-sm font-extrabold text-white  cursor-pointer"
             >
               <UserCheck className="w-4 h-4" />
-              Claim &quot;{selectedParticipant?.name}&quot; Profile
+              Use {selectedParticipant?.name}
             </button>
           </div>
         </div>

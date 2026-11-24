@@ -1,8 +1,6 @@
 import type { Expense, ExpensePayer, ExpenseShare, ParticipantBalance, SimplifiedDebt, Trip } from '@/types/trip';
 
-const toMinorUnits = (value: number) => Math.round((value + Number.EPSILON) * 100);
-const fromMinorUnits = (value: number) => value / 100;
-const roundMoney = (value: number) => fromMinorUnits(toMinorUnits(value));
+import { toMinorUnits, fromMinorUnits, roundMoney } from './money.ts';
 
 function normalizeEntriesToTotal<T extends { amount: number }>(entries: T[], total: number): T[] | null {
   const totalMinor = toMinorUnits(total);
@@ -127,9 +125,9 @@ export function calculateParticipantBalances(trip?: Trip): ParticipantBalance[] 
   });
 }
 
-export function calculateSimplifiedDebts(trip?: Trip): SimplifiedDebt[] {
+export function calculateSimplifiedDebts(trip?: Trip, existingBalances?: ParticipantBalance[]): SimplifiedDebt[] {
   if (!trip?.participants || !Array.isArray(trip.participants)) return [];
-  const balances = calculateParticipantBalances(trip);
+  const balances = existingBalances || calculateParticipantBalances(trip);
   const participantMap = new Map(trip.participants.map((participant) => [participant.id, participant]));
   const debtors = balances
     .map((balance) => ({ id: balance.participantId, amount: toMinorUnits(balance.netBalance) }))
@@ -177,10 +175,9 @@ export function getSettlementProgress(trip: Trip, debts = calculateSimplifiedDeb
   };
 }
 
-export function getTripStats(trip: Trip) {
+export function getTripStats(trip: Trip, balances = calculateParticipantBalances(trip)) {
   const totalSpentMinor = trip.expenses.reduce((sum, expense) => sum + toMinorUnits(expense.amount), 0);
   const totalSpent = fromMinorUnits(totalSpentMinor);
-  const balances = calculateParticipantBalances(trip);
   const topSpender = balances.reduce<ParticipantBalance | null>((top, balance) => {
     if (!top || balance.totalPaid > top.totalPaid) return balance;
     return top;

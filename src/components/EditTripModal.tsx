@@ -1,5 +1,6 @@
 'use client';
 
+import SaveStatus, { useSaveForm } from './SaveStatus';
 import React, { useState } from 'react';
 import type { Trip } from '@/types/trip';
 import { CalendarDays, Pencil, Save, X } from 'lucide-react';
@@ -14,10 +15,11 @@ interface EditTripModalProps {
   trip: Trip;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (updates: TripDetailsUpdate) => void;
+  onSave: (updates: TripDetailsUpdate) => Promise<boolean>;
 }
 
 export default function EditTripModal({ trip, isOpen, onClose, onSave }: EditTripModalProps) {
+  const { saving, error, run } = useSaveForm();
   const [name, setName] = useState(trip.name);
   const [description, setDescription] = useState(trip.description);
   const [startDate, setStartDate] = useState(trip.startDate);
@@ -26,10 +28,10 @@ export default function EditTripModal({ trip, isOpen, onClose, onSave }: EditTri
 
   const isValid = Boolean(name.trim() && startDate && (!trip.endDate || startDate <= trip.endDate));
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!isValid) return;
-    onSave({ name: name.trim(), description: description.trim(), startDate });
+    await run(() => onSave({ name: name.trim(), description: description.trim(), startDate }));
   };
 
   return (
@@ -38,16 +40,16 @@ export default function EditTripModal({ trip, isOpen, onClose, onSave }: EditTri
         role="dialog"
         aria-modal="true"
         aria-labelledby="edit-trip-title"
-        className="w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden"
+        data-long-form className="app-modal-sheet w-full max-w-md bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden"
       >
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-indigo-50/60">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-indigo-100 text-text-hi flex items-center justify-center">
               <Pencil className="w-4 h-4" />
             </div>
             <div>
               <h2 id="edit-trip-title" className="text-sm font-bold text-slate-900">Edit Trip Details</h2>
-              <p className="text-xs text-slate-500 font-medium">Change the cover photo from the overview</p>
+              <p className="text-xs text-text-mid font-medium">Your cover photo is in Trip details</p>
             </div>
           </div>
           <button
@@ -60,9 +62,9 @@ export default function EditTripModal({ trip, isOpen, onClose, onSave }: EditTri
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4"><SaveStatus saving={saving} error={error} />
           <div>
-            <label htmlFor="edit-trip-name" className="block text-xs font-bold text-slate-700 mb-1">Trip name</label>
+            <label htmlFor="edit-trip-name" className="block text-xs font-bold text-slate-700 mb-1">Trip Name</label>
             <input
               id="edit-trip-name"
               value={name}
@@ -74,7 +76,7 @@ export default function EditTripModal({ trip, isOpen, onClose, onSave }: EditTri
           </div>
 
           <div>
-            <label htmlFor="edit-trip-description" className="block text-xs font-bold text-slate-700 mb-1">Short note <span className="font-medium text-slate-400">(optional)</span></label>
+            <label htmlFor="edit-trip-description" className="block text-xs font-bold text-slate-700 mb-1">Short Note <span className="font-medium text-text-mid">(Optional)</span></label>
             <textarea
               id="edit-trip-description"
               value={description}
@@ -84,13 +86,13 @@ export default function EditTripModal({ trip, isOpen, onClose, onSave }: EditTri
               placeholder="What is this trip about?"
               className="min-h-24 w-full resize-none rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-indigo-500"
             />
-            <p className="mt-1 text-right text-[10px] font-semibold text-slate-400">{description.length}/160</p>
+            <p className="mt-1 text-right text-[10px] font-semibold text-text-mid">{description.length}/160</p>
           </div>
 
           <div>
-            <label htmlFor="edit-trip-start" className="block text-xs font-bold text-slate-700 mb-1">Start date</label>
+            <label htmlFor="edit-trip-start" className="block text-xs font-bold text-slate-700 mb-1">Start Date</label>
             <div className="relative">
-              <CalendarDays className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <CalendarDays className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-mid pointer-events-none" />
               <input
                 id="edit-trip-start"
                 type="date"
@@ -117,7 +119,7 @@ export default function EditTripModal({ trip, isOpen, onClose, onSave }: EditTri
             <button
               type="submit"
               disabled={!isValid}
-              className="flex min-h-12 w-2/3 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 text-sm font-bold text-white hover:bg-indigo-700 cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
+              className="flex min-h-12 w-2/3 items-center justify-center gap-1.5 rounded-xl tc-selected text-sm font-bold text-white  cursor-pointer disabled:bg-slate-200 disabled:text-text-mid disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4" />
               Save Details

@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import { Trip, UserProfile } from '@/types/trip';
-import { getTripInitials } from '@/lib/trip-utils';
 import { getTripDurationInDays, formatDateRange } from '@/lib/date-utils';
+import { getTripTypeMeta } from '@/lib/essentials-templates';
 import { Plus, User, Calendar, Trash2, CheckCircle2, Map, Settings2 } from 'lucide-react';
 import Avatar from '@/components/Avatar';
-import StoredPhoto from '@/components/StoredPhoto';
 import AppButton from '@/components/AppButton';
+import TripThumbnail from '@/components/TripThumbnail';
 
 interface TripsHubViewProps {
   trips: Trip[];
@@ -29,9 +29,13 @@ export default function TripsHubView({
   onDeleteTrip,
 }: TripsHubViewProps) {
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
-  const activeTrips = trips.filter((trip) => trip.status === 'active');
+  const activeTrips = trips.filter((trip) => trip.status === 'active' || trip.status === 'planning');
   const completedTrips = trips.filter((trip) => trip.status === 'completed');
-  const filteredTrips = trips.filter((trip) => filter === 'all' || trip.status === filter);
+  const filteredTrips = trips.filter((trip) => {
+    if (filter === 'all') return true;
+    if (filter === 'active') return trip.status === 'active' || trip.status === 'planning';
+    return trip.status === 'completed';
+  });
 
   return (
     <div className="relative mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col overflow-hidden px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] text-text-hi md:p-6">
@@ -43,15 +47,27 @@ export default function TripsHubView({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="truncate text-lg font-black text-slate-950">My trips</h1>
-              <span className="rounded-md bg-indigo-50 px-1.5 py-0.5 text-xs font-extrabold text-indigo-700">v2</span>
+              <span className="rounded-md bg-indigo-50 px-1.5 py-0.5 text-xs font-extrabold text-indigo-700">v3</span>
             </div>
             <p className="text-xs font-medium text-slate-500">{trips.length} {trips.length === 1 ? 'trip' : 'trips'} saved on this device</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2"><AppButton variant="ghost" size="icon" onClick={onOpenSettings} aria-label="Open appearance settings"><Settings2 className="h-5 w-5" /></AppButton><AppButton variant="secondary" size={userProfile ? 'standard' : 'icon'} onClick={onOpenCreateProfile} aria-label="Open profile">
-          {userProfile ? <><Avatar person={userProfile} size="xs" /><span className="max-w-20 truncate">{userProfile.name}</span></> : <User className="h-5 w-5" />}
-        </AppButton></div>
+        <div className="flex items-center gap-2">
+          <AppButton variant="secondary" size="icon" onClick={onOpenSettings} aria-label="Open appearance settings">
+            <Settings2 className="h-5 w-5" />
+          </AppButton>
+          <AppButton variant="secondary" size={userProfile ? 'standard' : 'icon'} onClick={onOpenCreateProfile} aria-label="Open profile">
+            {userProfile ? (
+              <>
+                <Avatar person={userProfile} size="xs" />
+                <span className="max-w-20 truncate">{userProfile.name}</span>
+              </>
+            ) : (
+              <User className="h-5 w-5" />
+            )}
+          </AppButton>
+        </div>
       </header>
 
       <div className="shrink-0 py-4">
@@ -79,9 +95,15 @@ export default function TripsHubView({
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
             <Map className="mx-auto h-8 w-8 text-slate-400" />
             <p className="mt-3 text-sm font-extrabold text-slate-800">
-              {filter === 'active' ? 'No active trips' : filter === 'completed' ? 'No completed trips' : 'No trips yet'}
+              {filter === 'active'
+                ? 'No active trips'
+                : filter === 'completed'
+                ? 'No completed trips'
+                : 'No trips yet'}
             </p>
-            <p className="mt-1 text-xs text-slate-500">Create a trip to start tracking shared expenses.</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Create a trip to start tracking shared expenses and gear.
+            </p>
             <AppButton size="large" className="mt-4" onClick={onOpenNewTripModal}>
               <Plus className="h-5 w-5" /> Create trip
             </AppButton>
@@ -91,47 +113,103 @@ export default function TripsHubView({
             {filteredTrips.map((trip) => {
               const tripSpending = trip.expenses.reduce((sum, expense) => sum + expense.amount, 0);
               const durationDays = getTripDurationInDays(trip);
+              const tripTypeMeta = trip.tripType ? getTripTypeMeta(trip.tripType) : null;
+
               return (
-                <article key={trip.id} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xs">
-                  <button type="button" onClick={() => onSelectTrip(trip.id)} className="w-full cursor-pointer p-4 text-left">
-                    <div className="flex min-w-0 items-start gap-3 pr-12">
-                      <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-indigo-100 font-black text-indigo-700">
-                        {trip.coverPhotoId && <StoredPhoto photoId={trip.coverPhotoId} alt={`${trip.name} cover`} />}
-                        <span className={trip.coverPhotoId ? 'opacity-0' : ''}>{getTripInitials(trip.name)}</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="min-w-0">
-                          <h2 className="truncate text-sm font-black text-slate-950">{trip.name}</h2>
-                          <span className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs font-bold ${trip.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                            {trip.status === 'active' ? 'Active' : <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Done</span>}
+                <article
+                  key={trip.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onSelectTrip(trip.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelectTrip(trip.id);
+                    }
+                  }}
+                  className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-xl hover:border-indigo-300 cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {/* Hero Image Thumbnail */}
+                  <div className="media-overlay relative h-60 w-full overflow-hidden">
+                    <TripThumbnail
+                      trip={trip}
+                      size="hero"
+                      className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                    />
+
+                    {/* Multi-layer Dark Gradient Overlay for Maximum Legibility */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-black/35" />
+
+                    {/* Top Bar Over Image: Badges & Delete Action */}
+                    <div className="absolute top-3 inset-x-3.5 flex items-center justify-between gap-2 z-10">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold backdrop-blur-md ${
+                            trip.status === 'completed'
+                              ? 'bg-slate-800/90 text-white'
+                              : 'bg-emerald-500/95 text-white'
+                          }`}
+                        >
+                          {trip.status === 'completed' ? (
+                            <><CheckCircle2 className="h-3 w-3" /> Done</>
+                          ) : (
+                            <><span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> Active</>
+                          )}
+                        </span>
+
+                        {tripTypeMeta && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-black/50 backdrop-blur-md border border-white/20 px-2.5 py-0.5 text-xs font-semibold text-white/95">
+                            <span>{tripTypeMeta.emoji}</span>
+                            <span>{tripTypeMeta.title}</span>
                           </span>
+                        )}
+                      </div>
+
+                      {/* Delete button (with stopPropagation) */}
+                      <button
+                        type="button"
+                        aria-label={`Delete ${trip.name}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteTrip(trip.id);
+                        }}
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-black/45 backdrop-blur-md border border-white/20 text-white/80 transition-all hover:bg-rose-600 hover:text-white hover:border-transparent cursor-pointer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Bottom Content Over Image: Title, Date, and Overlaid Statistics */}
+                    <div className="absolute bottom-3 inset-x-3.5 z-10">
+                      <h2 className="text-base font-black text-white leading-tight tracking-tight drop-shadow-md truncate">
+                        {trip.name}
+                      </h2>
+
+                      <p className="flex items-center gap-1.5 text-xs font-medium text-white/80 mt-0.5 drop-shadow-xs">
+                        <Calendar className="h-3 w-3 text-white/70" />
+                        <span>{formatDateRange(trip)}</span>
+                        <span>·</span>
+                        <span>{durationDays}d</span>
+                      </p>
+
+                      {/* Statistics Overlaid Directly Over Image */}
+                      <div className="mt-2.5 rounded-xl bg-black/60 backdrop-blur-md border border-white/15 p-2.5 text-white overlay-glass">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Records</p>
+                            <p className="text-xs font-bold text-white mt-0.5">
+                              {trip.participants.length} {trip.participants.length === 1 ? 'member' : 'members'} · {trip.expenses.length} {trip.expenses.length === 1 ? 'expense' : 'expenses'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Total Spent</p>
+                            <p className="text-sm font-black text-white mt-0.5 font-amount">
+                              {trip.currencySymbol} {tripSpending.toLocaleString()}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <p className="mt-3 flex items-center gap-1 text-xs font-medium text-slate-500">
-                      <Calendar className="h-3.5 w-3.5" /> {formatDateRange(trip)} · {durationDays}d
-                    </p>
-                    <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
-                      <div>
-                        <p className="text-xs font-semibold text-slate-500">Trip records</p>
-                        <p className="mt-0.5 text-sm font-black text-slate-800">{trip.participants.length} people · {trip.expenses.length} {trip.expenses.length === 1 ? 'expense' : 'expenses'}</p>
-                      </div>
-                      <div className="min-w-0 text-right">
-                        <p className="text-xs font-semibold text-slate-500">Total spent</p>
-                        <p className="mt-0.5 truncate text-sm font-black text-slate-950">{trip.currencySymbol} {tripSpending.toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </button>
-                  <div className="absolute right-2 top-2">
-                    <AppButton
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Delete ${trip.name}`}
-                      onClick={() => onDeleteTrip(trip.id)}
-                      className="hover:bg-rose-50 hover:text-rose-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </AppButton>
                   </div>
                 </article>
               );

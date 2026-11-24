@@ -24,8 +24,8 @@ export default function Avatar({ person, size = 'md', className = '' }: {
 }) {
   return (
     <span title={person.name} className={`relative inline-flex flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white border border-slate-200 shadow-sm ${sizes[size]} ${className}`}>
+      <span aria-hidden="true">{person.avatar}</span>
       {person.photoId && <StoredPhoto photoId={person.photoId} alt={`${person.name}'s profile photo`} className="rounded-full" />}
-      <span aria-hidden="true" className={person.photoId ? 'opacity-0' : ''}>{person.avatar}</span>
     </span>
   );
 }

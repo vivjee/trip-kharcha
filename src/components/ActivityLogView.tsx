@@ -1,144 +1,72 @@
-'use client';
-
-import React, { useState } from 'react';
-import { Trip, AuditLogEntry } from '@/types/trip';
-import { History, PlusCircle, Trash2, CheckCircle2, UserCheck, Sparkles, Filter, PencilLine, UserMinus, UserPlus, Flag, RotateCcw, Camera, Download, MapPlus } from 'lucide-react';
-import Avatar from '@/components/Avatar';
-import { formatDateTime } from '@/lib/date-utils';
-
-interface ActivityLogViewProps {
-  trip: Trip;
-}
-
-export default function ActivityLogView({ trip }: ActivityLogViewProps) {
-  const [filterParticipantId, setFilterParticipantId] = useState<string>('all');
-
-  const logs: AuditLogEntry[] = trip.auditLogs || [];
-
-  const filteredLogs = logs.filter((log) => {
-    if (filterParticipantId === 'all') return true;
-    return log.performedBy.id === filterParticipantId;
-  });
-
-  const getActionBadge = (actionType: AuditLogEntry['actionType']) => {
-    switch (actionType) {
-      case 'ADD_EXPENSE':
-        return { label: 'Added Expense', bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: PlusCircle };
-      case 'EDIT_EXPENSE':
-        return { label: 'Edited Expense', bg: 'bg-blue-50 text-blue-700 border-blue-200', icon: PlusCircle };
-      case 'DELETE_EXPENSE':
-        return { label: 'Deleted Expense', bg: 'bg-rose-50 text-rose-700 border-rose-200', icon: Trash2 };
-      case 'RECORD_SETTLEMENT':
-        return { label: 'Settlement', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 };
-      case 'EDIT_SETTLEMENT':
-        return { label: 'Edited Payment', bg: 'bg-teal-50 text-teal-700 border-teal-200', icon: CheckCircle2 };
-      case 'DELETE_SETTLEMENT':
-        return { label: 'Deleted Settlement', bg: 'bg-amber-50 text-amber-700 border-amber-200', icon: Trash2 };
-      case 'CLAIM_IDENTITY':
-        return { label: 'Joined / Claimed', bg: 'bg-purple-50 text-purple-700 border-purple-200', icon: UserCheck };
-      case 'ADD_PARTICIPANT':
-        return { label: 'Added Member', bg: 'bg-violet-50 text-violet-700 border-violet-200', icon: UserPlus };
-      case 'UPDATE_PARTICIPANT':
-        return { label: 'Renamed Member', bg: 'bg-blue-50 text-blue-700 border-blue-200', icon: PencilLine };
-      case 'REMOVE_PARTICIPANT':
-        return { label: 'Removed Member', bg: 'bg-rose-50 text-rose-700 border-rose-200', icon: UserMinus };
-      case 'UPDATE_TRIP':
-        return { label: 'Edited Trip', bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: PencilLine };
-      case 'CREATE_TRIP':
-        return { label: 'Created Trip', bg: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: MapPlus };
-      case 'COMPLETE_TRIP':
-        return { label: 'Completed Trip', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: Flag };
-      case 'REOPEN_TRIP':
-        return { label: 'Reopened Trip', bg: 'bg-amber-50 text-amber-700 border-amber-200', icon: RotateCcw };
-      case 'UPDATE_COVER':
-        return { label: 'Changed Cover', bg: 'bg-violet-50 text-violet-700 border-violet-200', icon: Camera };
-      case 'IMPORT_TRIP':
-        return { label: 'Imported Trip', bg: 'bg-blue-50 text-blue-700 border-blue-200', icon: Download };
-      default:
-        return { label: 'Trip Action', bg: 'bg-slate-100 text-slate-700 border-slate-200', icon: History };
-    }
-  };
-
+"use client";
+import { useMemo, useState } from "react";
+import type { Trip } from "@/types/trip";
+import { formatDateTime } from "@/lib/date-utils";
+import Pagination, { PAGE_SIZE } from "./Pagination";
+export default function ActivityLogView({ trip }: { trip: Trip }) {
+  const [member, setMember] = useState("all");
+  const [page, setPage] = useState(0);
+  const logs = useMemo(
+    () =>
+      (trip.auditLogs || [])
+        .filter((l) => member === "all" || l.performedBy.id === member)
+        .slice()
+        .sort((a, b) => b.timestamp.localeCompare(a.timestamp)),
+    [trip.auditLogs, member],
+  );
+  const safePage = Math.min(
+    page,
+    Math.max(0, Math.ceil(logs.length / PAGE_SIZE) - 1),
+  );
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-4 p-4 animate-pop-in md:p-5">
-      {/* Header */}
-      <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
+    <div className="tc-view">
+      <div className="tc-page-heading">
         <div>
-          <h2 className="text-base font-black text-slate-900 leading-tight flex items-center gap-1.5">
-            <History className="w-4 h-4 text-indigo-600" />
-            Activity & Audit Log
-          </h2>
-          <p className="text-[11px] text-slate-500 font-medium">
-            Complete transparent record of who did what
-          </p>
+          <h1>Activity history</h1>
+          <p>A record of the changes made to this trip.</p>
         </div>
-
-        {/* Filter Dropdown */}
-        {trip.participants.length > 0 && (
-          <div className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 shadow-2xs">
-            <Filter className="w-4 h-4 text-slate-400" />
-            <select
-              aria-label="Filter activity by member"
-              value={filterParticipantId}
-              onChange={(e) => setFilterParticipantId(e.target.value)}
-              className="min-h-10 flex-1 cursor-pointer bg-transparent text-xs font-extrabold text-slate-700 focus:outline-none"
-            >
-              <option value="all">All activity ({logs.length})</option>
-              {trip.participants.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.avatar} {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
       </div>
-
-      {/* Timeline */}
-      {filteredLogs.length === 0 ? (
-        <div className="bg-white p-8 rounded-3xl border border-slate-200 text-center space-y-2">
-          <Sparkles className="w-8 h-8 text-indigo-400 mx-auto" />
-          <p className="text-xs font-bold text-slate-700">No activity logged yet</p>
-          <p className="text-xs text-slate-500">
-            Actions like adding expenses, settlements, or member changes will appear here chronologically.
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-2.5 md:grid-cols-2">
-          {filteredLogs.slice().reverse().map((log) => {
-            const badge = getActionBadge(log.actionType);
-            const Icon = badge.icon;
-
-            return (
-              <div
-                key={log.id}
-                className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-1.5"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Avatar person={log.performedBy} size="xs" />
-                    <div>
-                      <span className="text-xs font-black text-slate-900">{log.performedBy.name}</span>
-                      <span className="ml-1.5 text-xs font-semibold text-slate-500">
-                        {formatDateTime(log.timestamp)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <span className={`flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-extrabold ${badge.bg}`}>
-                    <Icon className="w-3 h-3" />
-                    {badge.label}
-                  </span>
-                </div>
-
-                <p className="text-xs text-slate-700 font-bold pl-9">
-                  {log.details}
-                </p>
+      <label className="tc-field">
+        Filter by member
+        <select
+          value={member}
+          onChange={(e) => {
+            setMember(e.target.value);
+            setPage(0);
+          }}
+        >
+          <option value="all">
+            All members · {(trip.auditLogs || []).length} changes
+          </option>
+          {trip.participants.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="tc-card">
+        {logs
+          .slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+          .map((log) => (
+            <article className="tc-activity" key={log.id}>
+              <div className="tc-section-title">
+                <strong>
+                  {log.performedBy.avatar} {log.performedBy.name}
+                </strong>
+                <time dateTime={log.timestamp}>
+                  {formatDateTime(log.timestamp)}
+                </time>
               </div>
-            );
-          })}
-        </div>
-      )}
+              <p>{log.details}</p>
+              <span className="tc-help">
+                {log.actionType.toLowerCase().replaceAll("_", " ")}
+              </span>
+            </article>
+          ))}
+        {!logs.length && <p className="tc-empty">No activity to show.</p>}
+      </div>
+      <Pagination page={safePage} count={logs.length} onChange={setPage} />
     </div>
   );
 }

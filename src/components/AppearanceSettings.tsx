@@ -36,7 +36,8 @@ const sections: SectionMeta[] = [
 ];
 
 const fontVars: Record<FontStyle, string> = {
-  default: 'var(--font-space-grotesk)',
+  default: 'var(--font-plus-jakarta)',
+  grotesk: 'var(--font-space-grotesk)',
   cyber: 'var(--font-orbitron)',
   wide: 'var(--font-syncopate)',
   mono: 'var(--font-jetbrains-mono)',
@@ -63,7 +64,7 @@ function surfacePreviewStyle(id: SurfaceStyle): React.CSSProperties {
   return { border: '1px solid color-mix(in srgb,var(--text-hi) 17%,transparent)', boxShadow: '0 1px 2px color-mix(in srgb,var(--nm-lo) 12%,transparent)' };
 }
 
-function SelectionMark({ active, color = 'text-accent-1' }: { active: boolean; color?: string }) {
+function SelectionMark({ active, color = 'text-text-hi' }: { active: boolean; color?: string }) {
   return (
     <span aria-hidden className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border ${active ? `border-current bg-surface-deep ${color}` : 'border-line text-transparent'}`}>
       <Check className="h-3 w-3" strokeWidth={3} />
@@ -73,6 +74,7 @@ function SelectionMark({ active, color = 'text-accent-1' }: { active: boolean; c
 
 export default function AppearanceSettings({ onClose }: { onClose: () => void }) {
   const appearance = useAppearance();
+  const [advanced, setAdvanced] = useState(false);
   const [section, setSection] = useState<Section>('theme');
   const [message, setMessage] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
@@ -113,7 +115,7 @@ export default function AppearanceSettings({ onClose }: { onClose: () => void })
         {(['dark', 'light'] as const).map((mode) => (
           <div key={mode} className="mt-4 first:mt-0">
             <div className="mb-2 flex items-center gap-2">
-              <p className="text-[10px] font-black uppercase tracking-[.18em] text-text-faint">{mode}</p>
+              <p className="text-[10px] font-black uppercase tracking-[.18em] text-text-mid">{mode}</p>
               <span className="h-px flex-1 bg-line" />
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -169,15 +171,15 @@ export default function AppearanceSettings({ onClose }: { onClose: () => void })
                 <span className="surface-inset grid h-16 place-items-center rounded-xl">
                   <span className="grid h-8 w-14 place-items-center rounded-lg bg-surface text-[9px] font-black text-text-hi sm:h-9 sm:w-20 sm:text-[10px]" style={surfacePreviewStyle(surface.id)}>Button</span>
                 </span>
-                <span className="mt-2 flex min-w-0 items-center justify-center gap-1">
+                <span className="mt-2 flex min-w-0 items-center justify-center gap-1.5 px-0.5">
                   <span className="truncate text-[10px] font-black text-text-hi sm:text-xs">{surface.name}</span>
-                  {active && <Check className="h-3.5 w-3.5 shrink-0 text-accent-2" strokeWidth={3} />}
+                  <SelectionMark active={active} color="text-text-hi" />
                 </span>
               </button>
             );
           })}
         </div>
-        <SelectedSummary label={selectedSurface.name} text={selectedSurface.description} accent="text-accent-2" />
+        <SelectedSummary label={selectedSurface.name} text={selectedSurface.description} accent="text-text-hi" />
       </SettingCard>
     );
   } else if (section === 'background') {
@@ -195,9 +197,9 @@ export default function AppearanceSettings({ onClose }: { onClose: () => void })
                 className={`surface-interactive min-w-0 rounded-2xl p-2 cursor-pointer ${active ? 'surface-inset ring-2 ring-accent-3/70' : 'surface-card'}`}
               >
                 <span className="block aspect-[4/3] rounded-xl bg-surface-deep" style={patternStyle(pattern.id)} />
-                <span className="mt-2 flex min-w-0 items-center justify-center gap-1">
+                <span className="mt-2 flex min-w-0 items-center justify-center gap-1.5 px-0.5">
                   <span className="truncate text-[10px] font-black text-text-hi sm:text-xs">{pattern.name}</span>
-                  {active && <Check className="h-3.5 w-3.5 shrink-0 text-accent-3" strokeWidth={3} />}
+                  <SelectionMark active={active} color="text-text-hi" />
                 </span>
               </button>
             );
@@ -222,14 +224,14 @@ export default function AppearanceSettings({ onClose }: { onClose: () => void })
               >
                 <span className="flex min-w-0 items-start gap-2">
                   <span className="min-w-0 flex-1 truncate text-[14px] leading-tight text-text-hi sm:text-base" style={{ fontFamily: fontVars[font.id] }}>{font.name}</span>
-                  <SelectionMark active={active} color="text-accent-2" />
+                  <SelectionMark active={active} color="text-text-hi" />
                 </span>
-                <span className="mt-2 block truncate text-[9px] font-bold uppercase tracking-wider text-text-faint">{font.family}</span>
+                <span className="mt-2 block truncate text-[9px] font-bold uppercase tracking-wider text-text-mid">{font.family}</span>
               </button>
             );
           })}
         </div>
-        <SelectedSummary label={selectedFont.name} text={selectedFont.description} accent="text-accent-2" />
+        <SelectedSummary label={selectedFont.name} text={selectedFont.description} accent="text-text-hi" />
       </SettingCard>
     );
   } else {
@@ -247,7 +249,7 @@ export default function AppearanceSettings({ onClose }: { onClose: () => void })
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-black text-text-hi">Reduce motion</span>
-            <span className="mt-0.5 block text-xs leading-relaxed text-text-low">Minimizes interface movement. Your device preference is always honored.</span>
+            <span className="mt-0.5 block text-xs leading-relaxed text-text-mid">Minimizes interface movement. Your device preference is always honored.</span>
           </span>
         </button>
       </SettingCard>
@@ -256,45 +258,45 @@ export default function AppearanceSettings({ onClose }: { onClose: () => void })
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="appearance-title" className="fixed inset-0 z-[100] overflow-hidden bg-canvas text-text-hi">
-      <div aria-hidden className="absolute inset-0 bg-[image:var(--theme-pattern-image)] bg-[size:var(--theme-pattern-size)]" />
+      <div aria-hidden className="absolute inset-0 bg-[image:var(--theme-pattern-image)] bg-[size:var(--theme-pattern-size)] pointer-events-none" />
       <div className="relative flex h-full flex-col">
-        <header className="surface-card z-20 flex min-h-[calc(4rem+env(safe-area-inset-top))] shrink-0 items-end justify-between gap-2 rounded-none border-x-0 border-t-0 px-3 pb-2.5 pt-[env(safe-area-inset-top)] md:px-6 md:pb-3">
+        <header className="surface-card app-header z-20 flex min-h-[calc(4rem+env(safe-area-inset-top))] shrink-0 items-end justify-between gap-2 rounded-none border-x-0 border-t-0 px-3 pb-2.5 pt-[env(safe-area-inset-top)] md:px-6 md:pb-3">
           <div className="flex min-w-0 items-center gap-2.5">
-            <AppButton size="icon" variant="ghost" onClick={onClose} aria-label="Close appearance settings"><ArrowLeft className="h-5 w-5" /></AppButton>
+            <AppButton size="icon" variant="secondary" onClick={onClose} aria-label="Close appearance settings"><ArrowLeft className="h-5 w-5" /></AppButton>
             <div className="min-w-0">
               <h1 id="appearance-title" className="truncate text-base font-black text-text-hi md:text-lg">Appearance</h1>
-              <p className="truncate text-[11px] font-semibold text-text-low">{appearance.preset.name} · {selectedSurface.name}</p>
+              <p className="truncate text-[11px] font-semibold text-text-mid">{appearance.preset.name} · {selectedSurface.name}</p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <span aria-live="polite" className={`hidden rounded-full px-3 py-1 text-xs font-bold text-accent-2 surface-inset md:block ${message ? 'opacity-100' : 'opacity-0'}`}>{message}</span>
-            <AppButton variant="ghost" size="standard" className="px-3 md:hidden" onClick={resetAppearance} aria-label="Reset appearance to defaults">
+            <span aria-live="polite" className={`hidden rounded-full px-3 py-1 text-xs font-bold text-text-hi surface-inset md:block ${message ? 'opacity-100' : 'opacity-0'}`}>{message}</span>
+            <AppButton variant="secondary" size="standard" className="px-3 md:hidden" onClick={resetAppearance} aria-label="Reset appearance to defaults">
               <RotateCcw className="h-4 w-4" />
               <span className="hidden min-[360px]:inline">Reset</span>
             </AppButton>
           </div>
         </header>
 
-        <div className="min-h-0 flex-1 md:grid md:grid-cols-[220px_1fr]">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:grid md:grid-cols-[220px_1fr]">
           <aside className="surface-card z-10 hidden rounded-none border-y-0 border-l-0 p-4 md:flex md:flex-col">
-            <p className="px-3 py-2 text-[10px] font-black uppercase tracking-[.2em] text-text-faint">Settings</p>
-            <nav aria-label="Appearance sections" className="space-y-1">
-              {sections.map((item) => {
+            <p className="px-3 py-2 text-[10px] font-black uppercase tracking-[.2em] text-text-mid">Settings</p>
+            <button className="tc-button mb-3 w-full" aria-expanded={advanced} onClick={() => { setAdvanced(!advanced); setSection("theme"); }}>Advanced options</button><nav aria-label="Appearance sections" className="space-y-1">
+              {sections.filter(item => advanced || item.id === 'theme').map((item) => {
                 const Icon = item.icon;
                 const active = section === item.id;
                 return (
-                  <button key={item.id} type="button" aria-current={active ? 'page' : undefined} onClick={() => setSection(item.id)} className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-xs font-black cursor-pointer ${active ? 'surface-inset text-accent-1' : 'text-text-mid hover:text-text-hi'}`}>
+                  <button key={item.id} type="button" aria-current={active ? 'page' : undefined} onClick={() => setSection(item.id)} className={`flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-xs font-black cursor-pointer ${active ? 'surface-inset text-text-hi' : 'text-text-mid hover:text-text-hi'}`}>
                     <Icon className="h-4 w-4" />{item.label}
                   </button>
                 );
               })}
             </nav>
-            <AppButton variant="ghost" className="mt-auto" onClick={resetAppearance}><RotateCcw className="h-4 w-4" /> Reset appearance</AppButton>
+            <AppButton variant="secondary" className="mt-auto" onClick={resetAppearance}><RotateCcw className="h-4 w-4" /> Reset appearance</AppButton>
           </aside>
 
-          <main className="flex min-h-0 flex-col">
+          <main className="flex min-h-0 flex-1 flex-col overflow-hidden"><button className="tc-button m-3 md:hidden" aria-expanded={advanced} onClick={() => { setAdvanced(!advanced); setSection("theme"); }}>Advanced options</button>
             <nav aria-label="Appearance sections" className="surface-card z-10 grid shrink-0 grid-cols-5 gap-1 rounded-none border-x-0 px-1.5 py-1.5 md:hidden">
-              {sections.map((item) => {
+              {sections.filter(item => advanced || item.id === 'theme').map((item) => {
                 const Icon = item.icon;
                 const active = section === item.id;
                 return (
@@ -303,7 +305,7 @@ export default function AppearanceSettings({ onClose }: { onClose: () => void })
                     type="button"
                     aria-current={active ? 'page' : undefined}
                     onClick={() => setSection(item.id)}
-                    className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 [font-family:var(--font-inter)] text-[9px] font-bold leading-none cursor-pointer min-[360px]:text-[10px] ${active ? 'surface-inset text-accent-1' : 'text-text-mid'}`}
+                    className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 [font-family:var(--font-inter)] text-[9px] font-bold leading-none cursor-pointer min-[360px]:text-[10px] ${active ? 'surface-inset text-text-hi' : 'text-text-mid'}`}
                   >
                     <Icon className="h-4 w-4 shrink-0" strokeWidth={active ? 2.5 : 2} />
                     <span className="block max-w-full truncate">{item.mobileLabel}</span>
@@ -312,13 +314,13 @@ export default function AppearanceSettings({ onClose }: { onClose: () => void })
               })}
             </nav>
 
-            <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4 md:p-8">
+            <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto px-3 pb-[calc(3rem+env(safe-area-inset-bottom))] pt-4 md:p-8 touch-pan-y" style={{ WebkitOverflowScrolling: 'touch' }}>
               <div className="mx-auto max-w-4xl">
                 <div className="mb-3 flex items-center gap-3 md:mb-5">
-                  <span className="surface-inset grid h-10 w-10 shrink-0 place-items-center rounded-xl text-accent-1"><ActiveIcon className="h-5 w-5" /></span>
+                  <span className="surface-inset grid h-10 w-10 shrink-0 place-items-center rounded-xl text-text-hi"><ActiveIcon className="h-5 w-5" /></span>
                   <div className="min-w-0">
                     <h2 className="text-xl font-black leading-tight text-text-hi md:text-2xl">{activeMeta.label}</h2>
-                    <p className="mt-0.5 text-xs text-text-low md:text-sm">{activeMeta.hint}</p>
+                    <p className="mt-0.5 text-xs text-text-mid md:text-sm">{activeMeta.hint}</p>
                   </div>
                 </div>
                 {sectionContent}
@@ -330,7 +332,7 @@ export default function AppearanceSettings({ onClose }: { onClose: () => void })
         <div aria-live="polite" role="status" className={`pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-30 flex justify-center px-4 transition-all duration-200 md:hidden ${message ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'}`}>
           {message ? (
             <span className="surface-card-strong flex min-h-10 max-w-full items-center gap-2 rounded-full px-4 text-xs font-bold text-text-hi shadow-lg">
-              <Check className="h-4 w-4 shrink-0 text-accent-2" strokeWidth={3} />
+              <Check className="h-4 w-4 shrink-0 text-text-hi" strokeWidth={3} />
               <span className="truncate">{message}</span>
             </span>
           ) : null}
@@ -344,10 +346,10 @@ function SettingCard({ title, hint, icon: Icon, children }: { title: string; hin
   return (
     <section className="surface-card-strong rounded-2xl p-3.5 sm:rounded-3xl sm:p-5">
       <div className="mb-3 flex items-start gap-2.5 sm:mb-4 sm:gap-3">
-        <span className="surface-inset grid h-9 w-9 shrink-0 place-items-center rounded-xl text-accent-1 sm:h-10 sm:w-10"><Icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
+        <span className="surface-inset grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-hi sm:h-10 sm:w-10"><Icon className="h-4 w-4 sm:h-5 sm:w-5" /></span>
         <div className="min-w-0">
           <h3 className="text-sm font-black text-text-hi">{title}</h3>
-          <p className="mt-0.5 text-xs leading-relaxed text-text-low">{hint}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-text-mid">{hint}</p>
         </div>
       </div>
       {children}
@@ -361,7 +363,7 @@ function SelectedSummary({ label, text, accent }: { label: string; text: string;
       <Check className={`mt-0.5 h-4 w-4 shrink-0 ${accent}`} strokeWidth={3} />
       <div className="min-w-0">
         <p className="text-xs font-black text-text-hi">{label} selected</p>
-        <p className="mt-0.5 text-[11px] leading-relaxed text-text-low">{text}</p>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-text-mid">{text}</p>
       </div>
     </div>
   );
@@ -370,13 +372,13 @@ function SelectedSummary({ label, text, accent }: { label: string; text: string;
 function ColorModeControl({ darkMode, onSelectDark, onSelectLight }: { darkMode: boolean; onSelectDark: () => void; onSelectLight: () => void }) {
   return (
     <div className="mb-4">
-      <p className="mb-2 text-[10px] font-black uppercase tracking-[.16em] text-text-faint">Color mode</p>
+      <p className="mb-2 text-[10px] font-black uppercase tracking-[.16em] text-text-mid">Color mode</p>
       <div className="surface-inset grid grid-cols-2 gap-1 rounded-2xl p-1">
         <button
           type="button"
           aria-pressed={darkMode}
           onClick={onSelectDark}
-          className={`flex min-h-11 items-center justify-center gap-2 rounded-xl text-xs font-black cursor-pointer ${darkMode ? 'surface-card text-text-hi ring-1 ring-accent-1/50' : 'text-text-low'}`}
+          className={`flex min-h-12 items-center justify-center gap-2 rounded-xl text-xs font-black cursor-pointer ${darkMode ? 'surface-card text-text-hi ring-1 ring-accent-1/50' : 'text-text-mid'}`}
         >
           <MoonStar className="h-4 w-4" /> Dark
         </button>
@@ -384,12 +386,12 @@ function ColorModeControl({ darkMode, onSelectDark, onSelectLight }: { darkMode:
           type="button"
           aria-pressed={!darkMode}
           onClick={onSelectLight}
-          className={`flex min-h-11 items-center justify-center gap-2 rounded-xl text-xs font-black cursor-pointer ${!darkMode ? 'surface-card text-text-hi ring-1 ring-accent-warm/50' : 'text-text-low'}`}
+          className={`flex min-h-12 items-center justify-center gap-2 rounded-xl text-xs font-black cursor-pointer ${!darkMode ? 'surface-card text-text-hi ring-1 ring-accent-warm/50' : 'text-text-mid'}`}
         >
           <Sun className="h-4 w-4" /> Light
         </button>
       </div>
-      <p className="mt-2 text-[11px] leading-relaxed text-text-low">Switches to your last selected {darkMode ? 'light' : 'dark'} palette.</p>
+      <p className="mt-2 text-[11px] leading-relaxed text-text-mid">Switches to your last selected {darkMode ? 'light' : 'dark'} palette.</p>
     </div>
   );
 }

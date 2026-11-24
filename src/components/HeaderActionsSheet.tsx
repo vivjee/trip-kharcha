@@ -4,8 +4,10 @@ import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArchiveRestore,
+  History,
   LayoutGrid,
   PencilLine,
+  PieChart,
   Plus,
   RefreshCw,
   Settings2,
@@ -20,6 +22,7 @@ interface HeaderActionsSheetProps {
   trip: Trip;
   isOpen: boolean;
   onClose: () => void;
+  onNavigateToTab?: (tab: 'analytics' | 'activity') => void;
   onOpenNewTripModal: () => void;
   onOpenEditTripModal: () => void;
   onOpenShareModal: () => void;
@@ -34,6 +37,7 @@ export default function HeaderActionsSheet({
   trip,
   isOpen,
   onClose,
+  onNavigateToTab,
   onOpenNewTripModal,
   onOpenEditTripModal,
   onOpenShareModal,
@@ -52,34 +56,40 @@ export default function HeaderActionsSheet({
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [isOpen, onClose]);
 
-  if (!isOpen || typeof document === 'undefined') return null;
+  if (!isOpen) return null;
 
   const runAndClose = (action: () => void) => {
-    onClose();
     action();
+    onClose();
   };
 
   return createPortal(
-    <div className="app-scrim fixed inset-0 z-[70] flex items-end justify-center md:items-center md:p-4" onPointerDown={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs animate-fade-in md:items-center">
+      <div className="absolute inset-0" onClick={onClose} />
       <section
         role="dialog"
         aria-modal="true"
-        aria-labelledby="trip-actions-title"
-        onPointerDown={(event) => event.stopPropagation()}
-        className="surface-card-strong w-full max-w-md rounded-t-3xl md:rounded-3xl"
+        aria-label="Trip actions"
+        className="surface-card app-modal-sheet relative z-10 w-full max-w-lg rounded-t-3xl border-x-0 border-b-0 p-0 shadow-2xl animate-slide-up md:rounded-3xl md:border"
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <div>
-            <h2 id="trip-actions-title" className="text-base font-black text-text-hi">Trip actions</h2>
-            <p className="mt-0.5 max-w-[260px] truncate text-xs font-medium text-text-low">{trip.name}</p>
+            <h2 className="text-base font-black text-text-hi">{trip.name}</h2>
+            <p className="text-xs text-text-low">Quick actions & navigation</p>
           </div>
-          <AppButton size="icon" variant="ghost" onClick={onClose} aria-label="Close trip actions">
+          <AppButton size="icon" variant="secondary" onClick={onClose} aria-label="Close trip actions">
             <X className="h-5 w-5" />
           </AppButton>
         </div>
 
         <div className="space-y-4 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
           <div className="grid grid-cols-2 gap-3">
+            {onNavigateToTab && (
+              <>
+                <AppButton fullWidth onClick={() => runAndClose(() => onNavigateToTab('analytics'))}><PieChart className="h-4 w-4 text-indigo-600" /> Analytics</AppButton>
+                <AppButton fullWidth onClick={() => runAndClose(() => onNavigateToTab('activity'))}><History className="h-4 w-4 text-amber-600" /> Activity Log</AppButton>
+              </>
+            )}
             <AppButton fullWidth onClick={() => runAndClose(onOpenShareModal)}><Share2 className="h-4 w-4 text-indigo-600" /> Share</AppButton>
             <AppButton fullWidth onClick={() => runAndClose(onOpenSyncModal)}><ArchiveRestore className="h-4 w-4 text-indigo-600" /> Backup</AppButton>
             <AppButton fullWidth onClick={() => runAndClose(onOpenEditTripModal)}><PencilLine className="h-4 w-4 text-indigo-600" /> Edit trip</AppButton>

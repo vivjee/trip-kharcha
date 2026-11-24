@@ -1,5 +1,6 @@
 'use client';
 
+import SaveStatus, { useSaveForm } from './SaveStatus';
 import React, { useState } from 'react';
 import type { Participant, Trip } from '@/types/trip';
 import { Check, Pencil, Trash2, UserPlus, Users, X } from 'lucide-react';
@@ -10,8 +11,8 @@ interface AddParticipantModalProps {
   currentParticipantId: string;
   isOpen: boolean;
   onClose: () => void;
-  onAddParticipant: (participant: Omit<Participant, 'id'>) => void;
-  onUpdateParticipant: (participantId: string, name: string) => void;
+  onAddParticipant: (participant: Omit<Participant, 'id'>) => Promise<boolean>;
+  onUpdateParticipant: (participantId: string, name: string) => Promise<boolean>;
   onRemoveParticipant: (participantId: string) => void;
 }
 
@@ -27,6 +28,7 @@ export default function AddParticipantModal({
   onUpdateParticipant,
   onRemoveParticipant,
 }: AddParticipantModalProps) {
+  const { saving, error, run } = useSaveForm();
   const [name, setName] = useState('');
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [editingParticipantId, setEditingParticipantId] = useState<string>();
@@ -50,16 +52,16 @@ export default function AddParticipantModal({
     ))
   );
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!name.trim()) return;
 
     const colors = ['emerald', 'blue', 'purple', 'amber', 'rose', 'indigo'];
-    onAddParticipant({
+    if (!await run(() => onAddParticipant({
       name: name.trim(),
       avatar: currentAvatar,
       color: colors[trip.participants.length % colors.length],
-    });
+    }))) return;
     setName('');
   };
 
@@ -68,9 +70,9 @@ export default function AddParticipantModal({
     setEditingName(participant.name);
   };
 
-  const saveEditing = () => {
+  const saveEditing = async () => {
     if (!editingParticipantId || !editingName.trim()) return;
-    onUpdateParticipant(editingParticipantId, editingName.trim());
+    if (!await run(() => onUpdateParticipant(editingParticipantId, editingName.trim()))) return;
     setEditingParticipantId(undefined);
     setEditingName('');
   };
@@ -81,16 +83,16 @@ export default function AddParticipantModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="manage-members-title"
-        className="w-full max-w-md max-h-[92dvh] bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col"
+        className="app-modal-sheet w-full max-w-md max-h-[92dvh] bg-white rounded-t-3xl md:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col"
       >
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-indigo-50/60">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-indigo-100 text-text-hi flex items-center justify-center flex-shrink-0">
               <Users className="w-4 h-4" />
             </div>
             <div className="min-w-0">
               <h2 id="manage-members-title" className="text-sm font-bold text-slate-900 truncate">Manage Trip Members</h2>
-              <p className="text-[10px] text-slate-500 font-medium truncate">{trip.name} · {trip.participants.length} people</p>
+              <p className="text-[10px] text-text-mid font-medium truncate">{trip.name} · {trip.participants.length} people</p>
             </div>
           </div>
           <button
@@ -107,7 +109,7 @@ export default function AddParticipantModal({
           <section aria-labelledby="current-members-title" className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 id="current-members-title" className="text-xs font-black text-slate-900">Current members</h3>
-              <span className="text-[10px] font-bold text-slate-400">Rename or remove unused people</span>
+              <span className="text-[10px] font-bold text-text-mid">Rename or remove unused people</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -144,20 +146,20 @@ export default function AddParticipantModal({
                       ) : (
                         <>
                           <p className="truncate text-sm font-black text-slate-900">{participant.name}</p>
-                          <p className="truncate text-xs font-semibold text-slate-500">{isCurrentUser ? 'You' : isUsed ? 'In trip records' : 'No records'}</p>
+                          <p className="truncate text-xs font-semibold text-text-mid">{isCurrentUser ? 'You' : isUsed ? 'In trip records' : 'No records'}</p>
                         </>
                       )}
                       </div>
                     </div>
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       {isEditing ? (
-                        <button type="button" onClick={saveEditing} disabled={!editingName.trim()} aria-label={`Save ${participant.name}`} className="flex h-11 items-center justify-center rounded-xl bg-indigo-600 text-white disabled:bg-slate-200 disabled:text-slate-400 cursor-pointer"><Check className="w-4 h-4" /></button>
+                        <button type="button" onClick={saveEditing} disabled={!editingName.trim()} aria-label={`Save ${participant.name}`} className="flex h-11 items-center justify-center rounded-xl tc-selected text-white disabled:bg-slate-200 disabled:text-text-mid cursor-pointer"><Check className="w-4 h-4" /></button>
                       ) : (
                       <button
                         type="button"
                         onClick={() => beginEditing(participant)}
                         aria-label={`Rename ${participant.name}`}
-                        className="flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-700 cursor-pointer"
+                        className="flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-text-hi cursor-pointer"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
@@ -182,10 +184,10 @@ export default function AddParticipantModal({
 
           <div className="h-px bg-slate-200" />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4"><SaveStatus saving={saving} error={error} />
             <div>
               <h3 className="text-xs font-black text-slate-900">Add someone new</h3>
-              <p className="mt-0.5 text-[10px] font-medium text-slate-500">Photos stay personal; trip members use lightweight avatars.</p>
+              <p className="mt-0.5 text-[10px] font-medium text-text-mid">Photos stay personal; trip members use lightweight avatars.</p>
             </div>
 
             <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
@@ -198,7 +200,7 @@ export default function AddParticipantModal({
                       key={option}
                       type="button"
                       onClick={() => setGender(option)}
-                      className={`min-h-10 flex-1 rounded-lg px-2 text-xs font-extrabold capitalize cursor-pointer ${gender === option ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-500'}`}
+                      className={`min-h-10 flex-1 rounded-lg px-2 text-xs font-extrabold capitalize cursor-pointer ${gender === option ? 'bg-white text-text-hi shadow-2xs' : 'text-text-mid'}`}
                     >
                       {option}
                     </button>
@@ -208,7 +210,7 @@ export default function AddParticipantModal({
             </div>
 
             <div>
-              <label htmlFor="new-member-name" className="block text-xs font-bold text-slate-700 mb-1">Member name</label>
+              <label htmlFor="new-member-name" className="block text-xs font-bold text-slate-700 mb-1">Member Name</label>
               <input
                 id="new-member-name"
                 type="text"
@@ -224,7 +226,7 @@ export default function AddParticipantModal({
             <button
               type="submit"
               disabled={!name.trim()}
-              className="flex min-h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-indigo-600 text-sm font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none"
+              className="flex min-h-12 w-full items-center justify-center gap-1.5 rounded-xl tc-selected text-sm font-bold text-white shadow-sm transition-colors  cursor-pointer disabled:bg-slate-200 disabled:text-text-mid disabled:cursor-not-allowed disabled:shadow-none"
             >
               <UserPlus className="w-4 h-4" />
               Add to Trip

@@ -5,19 +5,20 @@ import { Trip, SimplifiedDebt } from '@/types/trip';
 import { getTripStats, calculateParticipantBalances } from '@/lib/debt-simplification';
 import { formatDateTime, getTripDurationInDays, parseLocalDate, toLocalDateTimeInput } from '@/lib/date-utils';
 import { getTripRecap } from '@/lib/trip-recap';
-import { Plus, ArrowRightLeft, Users, CheckCircle2, ArrowUpRight, CalendarDays, ChartPie, ReceiptText } from 'lucide-react';
-import StoredPhoto from '@/components/StoredPhoto';
+import { Plus, ArrowRightLeft, Users, CheckCircle2, ArrowUpRight, CalendarDays, ChartPie, ReceiptText, History, Package } from 'lucide-react';
 import PhotoPicker from '@/components/PhotoPicker';
 import Avatar from '@/components/Avatar';
 import CompletedTripOverview from '@/components/CompletedTripOverview';
 import AppButton from '@/components/AppButton';
+import TripThumbnail from '@/components/TripThumbnail';
+import { getChecklistStats, getTripTypeMeta } from '@/lib/essentials-templates';
 
 interface TripDashboardProps {
   trip: Trip;
   simplifiedDebts: SimplifiedDebt[];
   onOpenAddExpense: () => void;
   onOpenSettleUp: (debt?: SimplifiedDebt) => void;
-  onNavigateTab: (tab: 'expenses' | 'balances' | 'analytics') => void;
+  onNavigateTab: (tab: 'expenses' | 'balances' | 'analytics' | 'activity' | 'essentials') => void;
   onOpenAddParticipant: () => void;
   onUpdateCover: (photoId: string | undefined, accentColor?: string) => void;
 }
@@ -66,6 +67,8 @@ export default function TripDashboard({
   const getParticipant = (id: string) => trip.participants.find((participant) => participant.id === id);
   const hasSpending = stats.totalSpent > 0 && stats.totalExpensesCount > 0;
   const pendingTotal = simplifiedDebts.reduce((sum, debt) => sum + debt.amount, 0);
+  const checklistStats = getChecklistStats(trip.checklist || []);
+  const tripTypeMeta = getTripTypeMeta(trip.tripType);
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-4 p-4 animate-pop-in md:p-5">
@@ -74,22 +77,36 @@ export default function TripDashboard({
           className="relative h-36 overflow-hidden rounded-2xl bg-indigo-800 lg:h-auto lg:min-h-56"
           style={trip.accentColor && !trip.coverPhotoId ? { backgroundColor: trip.accentColor } : undefined}
         >
-          {trip.coverPhotoId ? (
-            <StoredPhoto photoId={trip.coverPhotoId} alt={`${trip.name} cover`} priority />
-          ) : (
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.18),transparent_35%)]" />
-          )}
+          <div data-media-overlay className="absolute inset-0"><TripThumbnail trip={trip} size="hero" /></div>
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/75 via-slate-950/20 to-slate-950/75" />
-          <div className="relative z-10 flex h-full items-start justify-between p-4">
-            <div className="max-w-[calc(100%-4rem)] rounded-lg bg-slate-950/55 px-2.5 py-1.5 text-xs font-bold text-white backdrop-blur-sm">
-              Started {startLabel} · Day {durationDays}
+          <div className="relative z-10 flex h-full flex-col justify-between p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {tripTypeMeta && (
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-950/65 px-2.5 py-1.5 text-xs font-bold text-white backdrop-blur-md border border-white/10 shadow-xs">
+                    <span>{tripTypeMeta.emoji}</span>
+                    <span>{tripTypeMeta.title}</span>
+                  </span>
+                )}
+                <span className="rounded-lg bg-slate-950/65 px-2.5 py-1.5 text-xs font-bold text-white backdrop-blur-md border border-white/10 shadow-xs">
+                  Started {startLabel} · Day {durationDays}
+                </span>
+              </div>
+              <PhotoPicker compact kind="cover" photoId={trip.coverPhotoId} label="trip cover" onChange={onUpdateCover} />
             </div>
-            <PhotoPicker compact kind="cover" photoId={trip.coverPhotoId} label="trip cover" onChange={onUpdateCover} />
           </div>
         </div>
 
         <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs lg:mt-0">
-          <p className="text-xs font-bold text-slate-500">Total spent</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-bold text-slate-500">Total spent</p>
+            {tripTypeMeta && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                <span>{tripTypeMeta.emoji}</span>
+                <span>{tripTypeMeta.title}</span>
+              </span>
+            )}
+          </div>
           <div className="mt-1 flex min-w-0 items-baseline gap-2">
             <p className="font-amount truncate text-3xl font-black tracking-tight text-slate-950">{trip.currencySymbol} {stats.totalSpent.toLocaleString()}</p>
             <span className="shrink-0 text-xs font-extrabold text-slate-500">{trip.currency}</span>
@@ -118,6 +135,111 @@ export default function TripDashboard({
         <AppButton variant="primary" size="large" onClick={onOpenAddExpense} fullWidth className="whitespace-nowrap px-2"><Plus className="h-5 w-5" /> Add expense</AppButton>
         <AppButton variant="secondary" size="large" onClick={() => onOpenSettleUp()} fullWidth className="whitespace-nowrap px-2"><ArrowRightLeft className="h-5 w-5 text-emerald-600" /> Settle up</AppButton>
       </div>
+
+      {/* Quick Links: Analytics & Activity */}
+      <div className="grid grid-cols-2 gap-2.5">
+        <button
+          type="button"
+          onClick={() => onNavigateTab('analytics')}
+          className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3 text-left transition-all hover:border-slate-300 hover:bg-slate-50 cursor-pointer shadow-2xs group"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 transition-colors group-hover:bg-indigo-100">
+              <ChartPie className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-black text-slate-900 truncate">Analytics</p>
+              <p className="text-[10px] text-slate-500 font-medium truncate">Spending charts</p>
+            </div>
+          </div>
+          <ArrowUpRight className="h-4 w-4 text-slate-400 shrink-0 group-hover:text-indigo-600 transition-colors" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onNavigateTab('activity')}
+          className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3 text-left transition-all hover:border-slate-300 hover:bg-slate-50 cursor-pointer shadow-2xs group"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 transition-colors group-hover:bg-amber-100">
+              <History className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-black text-slate-900 truncate">Activity Log</p>
+              <p className="text-[10px] text-slate-500 font-medium truncate">Audit history</p>
+            </div>
+          </div>
+          <ArrowUpRight className="h-4 w-4 text-slate-400 shrink-0 group-hover:text-amber-600 transition-colors" />
+        </button>
+      </div>
+
+      {/* Essentials & Packing Summary */}
+      <section
+        onClick={() => onNavigateTab('essentials')}
+        className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs hover:border-slate-300 transition-colors cursor-pointer"
+      >
+        {/* Header Row: Title & Link */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <Package className="h-4 w-4" />
+            </span>
+            <h2 className="text-sm font-bold text-slate-900 leading-tight">Packing Essentials</h2>
+          </div>
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 group-hover:text-indigo-700 shrink-0">
+            <span>Checklist</span>
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </span>
+        </div>
+
+        {checklistStats.total > 0 ? (
+          <div className="mt-3.5 space-y-2.5">
+            {/* Stats Row: Percentage and items packed */}
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="flex items-baseline gap-1.5 min-w-0">
+                <span className="font-amount text-xl font-bold tracking-tight text-slate-900">
+                  {trip.isPackingComplete ? '100%' : `${checklistStats.percentage}%`}
+                </span>
+                <span className="text-xs font-medium text-slate-500">
+                  {trip.isPackingComplete ? 'ready' : 'packed'}
+                </span>
+              </div>
+              {trip.isPackingComplete ? (
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200">
+                  ✅ Packing Complete
+                </span>
+              ) : (
+                <span className="text-xs font-medium text-slate-500">
+                  {checklistStats.packed} of {checklistStats.total} items
+                </span>
+              )}
+            </div>
+
+            {/* Progress Bar */}
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-300"
+                style={{ width: `${trip.isPackingComplete ? 100 : checklistStats.percentage}%` }}
+              />
+            </div>
+
+            {/* Bottom Status Labels */}
+            <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+              <span className="text-emerald-700 font-semibold">{checklistStats.packed} ready in bag</span>
+              <span className={trip.isPackingComplete ? 'text-slate-400 font-medium' : 'text-amber-700 font-semibold'}>
+                {trip.isPackingComplete
+                  ? (checklistStats.pending > 0 ? `${checklistStats.pending} skipped` : 'All packed')
+                  : `${checklistStats.pending} still to pack`}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-3 rounded-xl bg-slate-50 p-3 text-center">
+            <p className="text-xs font-semibold text-slate-700">No essentials in checklist</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Tap to explore recommended gear</p>
+          </div>
+        )}
+      </section>
 
       {hasSpending && (
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">

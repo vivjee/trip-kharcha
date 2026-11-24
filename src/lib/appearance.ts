@@ -11,7 +11,8 @@ export type FontStyle =
   | 'couture'
   | 'marquee'
   | 'pillow'
-  | 'bricolage';
+  | 'bricolage'
+  | 'grotesk';
 
 export interface ThemePreset {
   id: string;
@@ -115,7 +116,8 @@ export const PATTERN_OPTIONS: { id: BackgroundPattern; name: string }[] = [
 ];
 
 export const FONT_OPTIONS: { id: FontStyle; name: string; family: string; description: string }[] = [
-  { id: 'default', name: 'Crystal Tech', family: 'Space Grotesk', description: 'Precise and highly readable' },
+  { id: 'default', name: 'Plus Jakarta', family: 'Plus Jakarta Sans', description: 'Crisp, practical, and beautifully balanced' },
+  { id: 'grotesk', name: 'Crystal Grotesk', family: 'Space Grotesk', description: 'Retro tech display character' },
   { id: 'cyber', name: 'Aero Cyber', family: 'Orbitron', description: 'Futuristic display character' },
   { id: 'wide', name: 'Quantum Wide', family: 'Syncopate', description: 'Wide cinematic headings' },
   { id: 'mono', name: 'Neo-Chrono', family: 'JetBrains Mono', description: 'Technical and measured' },
@@ -129,14 +131,21 @@ export const FONT_OPTIONS: { id: FontStyle; name: string; family: string; descri
 
 export const DEFAULT_APPEARANCE: AppearancePreferences = {
   version: 1,
-  presetId: 'slate',
-  surfaceStyle: 'material',
-  pattern: 'mesh',
+  presetId: 'midnight',
+  surfaceStyle: 'neumorphic',
+  pattern: 'none',
   fontStyle: 'default',
   reducedMotion: false,
-  lastDarkPresetId: 'slate',
+  lastDarkPresetId: 'midnight',
   lastLightPresetId: 'paper',
 };
+
+export function getSystemThemePreset(): string {
+  if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+    return 'paper';
+  }
+  return 'midnight';
+}
 
 const surfaceIds = new Set(SURFACE_OPTIONS.map((item) => item.id));
 const patternIds = new Set(PATTERN_OPTIONS.map((item) => item.id));
@@ -150,11 +159,11 @@ function validPresetForMode(id: unknown, mode: AppearanceMode, fallback: string)
   return typeof id === 'string' && THEME_PRESETS.some((preset) => preset.id === id && preset.base === mode) ? id : fallback;
 }
 
-export function normalizeAppearance(value: unknown): AppearancePreferences {
+export function normalizeAppearance(value: unknown, fallbackPreset = DEFAULT_APPEARANCE.presetId): AppearancePreferences {
   const input = value && typeof value === 'object' ? value as Partial<AppearancePreferences> : {};
   return {
     version: 1,
-    presetId: typeof input.presetId === 'string' && THEME_PRESETS.some((preset) => preset.id === input.presetId) ? input.presetId : DEFAULT_APPEARANCE.presetId,
+    presetId: typeof input.presetId === 'string' && THEME_PRESETS.some((preset) => preset.id === input.presetId) ? input.presetId : fallbackPreset,
     surfaceStyle: surfaceIds.has(input.surfaceStyle as SurfaceStyle) ? input.surfaceStyle as SurfaceStyle : DEFAULT_APPEARANCE.surfaceStyle,
     pattern: patternIds.has(input.pattern as BackgroundPattern) ? input.pattern as BackgroundPattern : DEFAULT_APPEARANCE.pattern,
     fontStyle: fontIds.has(input.fontStyle as FontStyle) ? input.fontStyle as FontStyle : DEFAULT_APPEARANCE.fontStyle,
@@ -165,11 +174,16 @@ export function normalizeAppearance(value: unknown): AppearancePreferences {
 }
 
 export function parseStoredAppearance(raw: string | null): AppearancePreferences {
-  if (!raw) return DEFAULT_APPEARANCE;
+  const systemPreset = getSystemThemePreset();
+  const defaultWithSystem: AppearancePreferences = {
+    ...DEFAULT_APPEARANCE,
+    presetId: systemPreset,
+  };
+  if (!raw) return defaultWithSystem;
   try {
-    return normalizeAppearance(JSON.parse(raw));
+    return normalizeAppearance(JSON.parse(raw), systemPreset);
   } catch {
-    return DEFAULT_APPEARANCE;
+    return defaultWithSystem;
   }
 }
 

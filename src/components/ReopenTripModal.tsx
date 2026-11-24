@@ -16,7 +16,7 @@ export default function ReopenTripModal({ trip, isOpen, onClose, onConfirm }: Re
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/65 backdrop-blur-sm md:items-center md:p-4 animate-pop-in">
-      <div role="dialog" aria-modal="true" aria-labelledby="reopen-trip-title" className="w-full max-w-md overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl md:rounded-3xl">
+      <div role="dialog" aria-modal="true" aria-labelledby="reopen-trip-title" className="app-modal-sheet w-full max-w-md overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl md:rounded-3xl">
         <div className="flex items-center justify-between border-b border-amber-100 bg-amber-50 px-5 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-sm">

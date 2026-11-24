@@ -1,5 +1,7 @@
 'use client';
 
+import { validatePhotoDataUrl } from './validation';
+
 const DB_NAME = 'trip-calculator-v2';
 const STORE_NAME = 'photos';
 const DB_VERSION = 1;
@@ -32,10 +34,9 @@ async function runTransaction<T>(mode: IDBTransactionMode, action: (store: IDBOb
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE_NAME, mode);
     const request = action(transaction.objectStore(STORE_NAME));
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-    transaction.oncomplete = () => database.close();
-    transaction.onerror = () => reject(transaction.error);
+    transaction.oncomplete = () => { database.close(); resolve(request.result); };
+    transaction.onabort = () => { database.close(); reject(transaction.error || new Error('Photo storage was interrupted.')); };
+    transaction.onerror = () => { database.close(); reject(transaction.error); };
   });
 }
 
@@ -123,8 +124,8 @@ export async function processAndStorePhoto(file: File, kind: PhotoKind): Promise
     sourceY = (image.naturalHeight - sourceHeight) / 2;
   }
 
-  const width = kind === 'profile' ? 512 : 1440;
-  const height = kind === 'profile' ? 512 : 810;
+  const width = kind === 'profile' ? 320 : 1280;
+  const height = kind === 'profile' ? 320 : 720;
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -149,8 +150,7 @@ export function blobToDataUrl(blob: Blob): Promise<string> {
 }
 
 export async function storeDataUrlPhoto(dataUrl: string, kind: PhotoKind): Promise<string> {
+  validatePhotoDataUrl(dataUrl);
   const blob = await fetch(dataUrl).then((response) => response.blob());
-  const photoId = `photo-${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-  await runTransaction('readwrite', (store) => store.put({ id: photoId, kind, blob, createdAt: new Date().toISOString() } satisfies StoredPhoto));
-  return photoId;
+  return (await processAndStorePhoto(new File([blob], 'backup-photo', { type: blob.type }), kind)).photoId;
 }

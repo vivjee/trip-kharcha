@@ -53,7 +53,9 @@ export default function AppearanceProvider({ children }: { children: React.React
   const [preferences, setPreferences] = useState<AppearancePreferences>(DEFAULT_APPEARANCE);
 
   useEffect(() => {
-    const stored = parseStoredAppearance(localStorage.getItem(APPEARANCE_STORAGE_KEY));
+    let raw: string | null = null;
+    try { raw = localStorage.getItem(APPEARANCE_STORAGE_KEY); } catch { /* Appearance still works without persistence. */ }
+    const stored = parseStoredAppearance(raw);
     // The pre-paint bootstrap already applied this appearance to the document.
     // Syncing state after mount keeps React hydration aligned with the SSR default.
     // eslint-disable-next-line react-hooks/set-state-in-effect

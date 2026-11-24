@@ -1,25 +1,27 @@
 {
   "name": "trip-calculator",
-  "version": "2.0.0",
+  "version": "3.1.1",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev -H 0.0.0.0",
+    "build": "node scripts/prepare-assets.mjs && next build && node scripts/build-offline.mjs",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test src/lib/appearance.test.ts src/lib/date-utils.test.ts src/lib/debt-simplification.test.ts src/lib/trip-recap.test.ts",
-    "cap:sync": "next build && npx cap sync",
+    "test": "node --test src/lib/*.test.ts",
+    "cap:sync": "npm run build && cap sync",
     "apk:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1"
   },
   "dependencies": {
-    "@capacitor/android": "^8.5.0",
-    "@capacitor/cli": "^8.5.0",
-    "@capacitor/core": "^8.5.0",
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.1",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/share": "^8.0.3",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.43.0",
     "lucide-react": "^1.28.0",
-    "next": "16.2.12",
+    "next": "^16.4.1",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -30,8 +32,10 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.12",
+    "eslint-config-next": "^16.4.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "sharp": "^0.35.5",
+    "@capacitor/cli": "^8.5.1"
   }
 }

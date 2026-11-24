@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   Anton,
   Bricolage_Grotesque,
@@ -8,30 +8,34 @@ import {
   JetBrains_Mono,
   Orbitron,
   Outfit,
+  Plus_Jakarta_Sans,
   Quicksand,
   Space_Grotesk,
   Syncopate,
   Syne,
 } from "next/font/google";
 import "./globals.css";
+import "./workspace.css";
 import AppearanceBootstrap from "@/components/AppearanceBootstrap";
 import AppearanceProvider from "@/components/AppearanceProvider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk", display: "swap" });
-const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains-mono", display: "swap" });
-const orbitron = Orbitron({ subsets: ["latin"], variable: "--font-orbitron", display: "swap" });
-const syncopate = Syncopate({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-syncopate", display: "swap" });
-const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap" });
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap" });
-const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", variable: "--font-instrument-serif", display: "swap" });
-const anton = Anton({ subsets: ["latin"], weight: "400", variable: "--font-anton", display: "swap" });
-const quicksand = Quicksand({ subsets: ["latin"], variable: "--font-quicksand", display: "swap" });
-const bricolage = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-bricolage", display: "swap" });
+const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-plus-jakarta", display: "swap" });
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk", preload: false, display: "swap" });
+const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains-mono", preload: false, display: "swap" });
+const orbitron = Orbitron({ subsets: ["latin"], variable: "--font-orbitron", preload: false, display: "swap" });
+const syncopate = Syncopate({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-syncopate", preload: false, display: "swap" });
+const syne = Syne({ subsets: ["latin"], variable: "--font-syne", preload: false, display: "swap" });
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", preload: false, display: "swap" });
+const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", preload: false, display: "swap" });
+const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", variable: "--font-instrument-serif", preload: false, display: "swap" });
+const anton = Anton({ subsets: ["latin"], weight: "400", variable: "--font-anton", preload: false, display: "swap" });
+const quicksand = Quicksand({ subsets: ["latin"], variable: "--font-quicksand", preload: false, display: "swap" });
+const bricolage = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-bricolage", preload: false, display: "swap" });
 
 const fontVariables = [
   inter.variable,
+  plusJakartaSans.variable,
   spaceGrotesk.variable,
   jetbrains.variable,
   orbitron.variable,
@@ -46,10 +50,15 @@ const fontVariables = [
 ].join(" ");
 
 export const metadata: Metadata = {
-  title: "Trip Calculator v2 | Nepal Group Expenses",
-  description: "Private, offline-first group trip expense tracking with flexible splits and simplified settlements in NPR.",
+  manifest: "/manifest.webmanifest",
+  title: "Trip Calculator | Nepal Group Expenses & Trip Planning",
+  description: "Private, offline-first group trip expense tracking, pre-trip essentials planning, and simplified settlements in NPR.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width", initialScale: 1, viewportFit: "cover", interactiveWidget: "resizes-content",
+  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#EFEAE1" }, { media: "(prefers-color-scheme: dark)", color: "#0F131E" }],
+};
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -59,9 +68,9 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="dark"
-      data-theme-preset="slate"
-      data-surface="material"
-      data-pattern="mesh"
+      data-theme-preset="midnight"
+      data-surface="neumorphic"
+      data-pattern="none"
       data-font-style="default"
       suppressHydrationWarning
       className={`${fontVariables} h-full antialiased`}

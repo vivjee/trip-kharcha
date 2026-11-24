@@ -21,9 +21,9 @@ const variants: Record<AppButtonVariant, string> = {
 
 const sizes: Record<AppButtonSize, string> = {
   compact: 'min-h-10 px-3 text-xs rounded-xl',
-  standard: 'min-h-11 px-3.5 text-[13px] rounded-xl',
+  standard: 'min-h-12 px-3.5 text-[13px] rounded-xl',
   large: 'min-h-12 px-4 text-sm rounded-xl',
-  icon: 'h-11 w-11 shrink-0 p-0 rounded-xl',
+  icon: 'h-12 w-12 shrink-0 p-0 rounded-xl',
 };
 
 export default function AppButton({

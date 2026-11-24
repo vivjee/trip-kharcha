@@ -1,99 +1,154 @@
-'use client';
-
-import React, { useState } from 'react';
-import confetti from 'canvas-confetti';
-import { Check, Download, ImageDown, LoaderCircle, MessageCircle, Share2, X } from 'lucide-react';
-import { formatDateRange, getTripDurationInDays } from '@/lib/date-utils';
-import { calculateParticipantBalances, getTripStats } from '@/lib/debt-simplification';
-import { createShareCard } from '@/lib/share-card';
-import { SimplifiedDebt, Trip } from '@/types/trip';
-
-interface ShareSummaryModalProps {
+"use client";
+import { useState } from "react";
+import { X } from "lucide-react";
+import type { SimplifiedDebt, Trip } from "@/types/trip";
+import { tripCalculations } from "@/lib/trip-store";
+import { formatMoney } from "@/lib/money";
+import { formatDateRange } from "@/lib/date-utils";
+export default function ShareSummaryModal({
+  trip,
+  simplifiedDebts,
+  isOpen,
+  onClose,
+}: {
   trip: Trip;
   simplifiedDebts: SimplifiedDebt[];
   isOpen: boolean;
   onClose: () => void;
-}
-
-const safeFilename = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-
-export default function ShareSummaryModal({ trip, simplifiedDebts, isOpen, onClose }: ShareSummaryModalProps) {
-  const [copied, setCopied] = useState(false);
-  const [creatingCard, setCreatingCard] = useState(false);
-  const [error, setError] = useState('');
+}) {
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
   if (!isOpen) return null;
-
-  const stats = getTripStats(trip);
-  const balances = calculateParticipantBalances(trip);
-  const duration = getTripDurationInDays(trip);
-  const lines = [
-    `${trip.coverImageEmoji} *${trip.name}* — Trip Summary`,
-    `🗓️ *Dates:* ${formatDateRange(trip)} (${duration} ${duration === 1 ? 'day' : 'days'})`,
-    `━━━━━━━━━━━━━━━━━━━━━━`,
-    `💰 *Total Spent:* ${trip.currencySymbol} ${stats.totalSpent.toLocaleString()} (${trip.currency})`,
-    `📈 *Daily Pace:* ${trip.currencySymbol} ${Math.round(stats.totalSpent / duration).toLocaleString()} / day`,
-    `👥 *Average / Person:* ${trip.currencySymbol} ${stats.perPersonAvg.toLocaleString()}`,
-    `🧾 *Total Expenses:* ${stats.totalExpensesCount}`,
-    '',
-    '✨ *PAYMENTS TO SETTLE:*',
+  const { stats, balances } = tripCalculations(trip);
+  const summary = [
+    trip.name + " — Trip summary",
+    formatDateRange(trip),
+    "Total spent: " + formatMoney(stats.totalSpent, trip.currencySymbol),
+    "",
+    "SIMPLIFIED PAYMENTS",
     ...(simplifiedDebts.length
-      ? simplifiedDebts.map((debt, index) => `${index + 1}. *${debt.from.name}* → *${debt.to.name}*: ${trip.currencySymbol} ${debt.amount.toLocaleString()}`)
-      : ['🎉 All debts are fully settled!']),
-    '',
-    '📊 *WHO PAID WHAT:*',
-    ...balances.map((balance) => `• ${balance.avatar} *${balance.participantName}*: ${trip.currencySymbol} ${balance.totalPaid.toLocaleString()}`),
-    '',
-    'Shared via Trip Calculator v2 🏔️',
-  ];
-  const summaryText = lines.join('\n');
-
-  const download = (blob: Blob, filename: string) => {
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const copyText = async () => {
-    await navigator.clipboard.writeText(summaryText);
-    setCopied(true);
-    confetti({ particleCount: 35, spread: 45, origin: { y: 0.75 } });
-    window.setTimeout(() => setCopied(false), 2200);
-  };
-
-  const shareCard = async () => {
-    setCreatingCard(true);
-    setError('');
+      ? simplifiedDebts.map(
+          (d, i) =>
+            i +
+            1 +
+            ". " +
+            d.from.name +
+            " → " +
+            d.to.name +
+            ": " +
+            formatMoney(d.amount, trip.currencySymbol),
+        )
+      : ["All square. No pending payments."]),
+    "",
+    "MEMBER SPENDING",
+    ...balances.map(
+      (b) =>
+        b.participantName +
+        ": paid " +
+        formatMoney(b.totalPaid, trip.currencySymbol) +
+        ", share " +
+        formatMoney(b.totalOwed, trip.currencySymbol),
+    ),
+    "",
+    "Shared with Trip Calculator",
+  ].join("\n");
+  const filename = trip.name.replace(/[^a-z0-9]/gi, "_");
+  const exportFiles = async (images: boolean) => {
+    if (busy) return;
+    setBusy(true);
+    setMessage("");
     try {
-      const blob = await createShareCard(trip, simplifiedDebts);
-      const file = new File([blob], `${safeFilename(trip.name)}_summary.png`, { type: 'image/png' });
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: `${trip.name} summary`, text: 'Trip Calculator v2 summary', files: [file] });
-      } else {
-        download(blob, file.name);
-      }
-    } catch (caught) {
-      if (caught instanceof DOMException && caught.name === 'AbortError') return;
-      setError(caught instanceof Error ? caught.message : 'Unable to create the share card.');
+      const { shareFiles } = await import("@/lib/platform");
+      const files = images
+        ? (
+            await (
+              await import("@/lib/share-card")
+            ).createShareCards(trip, simplifiedDebts)
+          ).map(
+            (b, i) =>
+              new File([b], filename + "_summary_" + (i + 1) + ".png", {
+                type: "image/png",
+              }),
+          )
+        : [
+            new File([summary], filename + "_summary.txt", {
+              type: "text/plain",
+            }),
+          ];
+      await shareFiles(files, trip.name + " summary");
+      setMessage(
+        files.length +
+          " " +
+          (images ? "image page(s)" : "text file") +
+          " prepared.",
+      );
+    } catch (e) {
+      if (!(e instanceof DOMException && e.name === "AbortError"))
+        setMessage(e instanceof Error ? e.message : "Could not export.");
     } finally {
-      setCreatingCard(false);
+      setBusy(false);
     }
   };
-
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-sm flex items-end md:items-center justify-center md:p-4 animate-pop-in" role="dialog" aria-modal="true" aria-labelledby="share-title">
-      <div className="w-full max-w-md bg-white rounded-t-[28px] md:rounded-[28px] shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[94dvh]">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-indigo-50"><div className="flex items-center gap-2.5"><div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center"><Share2 className="w-5 h-5" /></div><div><h2 id="share-title" className="text-base font-extrabold text-slate-900">Share Trip Summary</h2><p className="text-xs text-slate-500">Text or a temporary visual card</p></div></div><button onClick={onClose} aria-label="Close share summary" className="w-11 h-11 -mr-2 rounded-full bg-slate-200/70 flex items-center justify-center cursor-pointer"><X className="w-5 h-5" /></button></div>
-
-        <div className="p-5 space-y-4 overflow-y-auto">
-          <div><div className="flex items-center justify-between mb-2"><span className="text-sm font-bold text-slate-700">Group chat preview</span><span className="text-xs text-slate-400">WhatsApp / Viber ready</span></div><textarea readOnly rows={11} value={summaryText} aria-label="Trip summary text" className="w-full p-3.5 rounded-2xl border border-slate-200 bg-slate-50 font-mono text-xs leading-relaxed text-slate-800 focus:outline-none" /></div>
-          <button onClick={() => void shareCard()} disabled={creatingCard} className="w-full min-h-13 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-extrabold text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60">{creatingCard ? <LoaderCircle className="w-5 h-5 animate-spin" /> : <ImageDown className="w-5 h-5" />}{creatingCard ? 'Creating card…' : 'Share / Download Visual'}</button>
-          <p className="text-xs text-center text-slate-500 -mt-2">Opens your phone’s share sheet or downloads a PNG. The app never keeps the generated card.</p>
-          <button onClick={() => void copyText()} className="w-full min-h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer">{copied ? <Check className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}{copied ? 'Copied!' : 'Copy for Group Chat'}</button>
-          <button onClick={() => download(new Blob([summaryText], { type: 'text/plain' }), `${safeFilename(trip.name)}_summary.txt`)} className="w-full min-h-12 rounded-2xl border border-slate-300 text-slate-700 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer"><Download className="w-5 h-5 text-indigo-600" />Download Text Summary</button>
-          {error && <p role="alert" className="text-sm text-rose-600 font-semibold text-center">{error}</p>}
+    <div
+      className="tc-dialog-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="share-title"
+    >
+      <div className="tc-dialog">
+        <div className="tc-section-title">
+          <h2 id="share-title">Share trip summary</h2>
+          <button
+            className="tc-icon"
+            aria-label="Close share summary"
+            disabled={busy}
+            onClick={onClose}
+          >
+            <X />
+          </button>
+        </div>
+        <div className="tc-view">
+          <textarea
+            aria-label="Trip summary text"
+            className="tc-summary-text"
+            rows={10}
+            readOnly
+            value={summary}
+          />
+          <p className="tc-help">
+            Includes every pending payment. Image summaries add pages as needed
+            so names and amounts stay readable.
+          </p>
+          <button
+            className="tc-button primary"
+            disabled={busy}
+            onClick={() => void exportFiles(true)}
+          >
+            {busy ? "Preparing…" : "Share / download images"}
+          </button>
+          <button
+            className="tc-button"
+            disabled={busy}
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(summary);
+                setMessage("Summary copied.");
+              } catch {
+                setMessage("Clipboard unavailable. Download the text instead.");
+              }
+            }}
+          >
+            Copy summary
+          </button>
+          <button
+            className="tc-button"
+            disabled={busy}
+            onClick={() => void exportFiles(false)}
+          >
+            Export text summary
+          </button>
+          {message && <p role="status">{message}</p>}
         </div>
       </div>
     </div>
