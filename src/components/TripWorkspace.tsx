@@ -222,7 +222,7 @@ export default function TripWorkspace() {
               </button>
             )}
             <div>
-              <span className="tc-eyebrow">TRIP CALCULATOR</span>
+              <span className="tc-eyebrow">TRIPKHARCHA</span>
               <p>
                 {trip?.name ||
                   (settings
@@ -335,7 +335,7 @@ export default function TripWorkspace() {
                 </button>
               </section>
               <p className="tc-help">
-                Trip Calculator 3.1.1 · Device-local storage · NPR
+                TripKharcha 3.1.1 · Device-local storage · NPR
               </p>
             </>
           ) : !trip ? (

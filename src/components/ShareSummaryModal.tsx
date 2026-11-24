@@ -50,7 +50,7 @@ export default function ShareSummaryModal({
         formatMoney(b.totalOwed, trip.currencySymbol),
     ),
     "",
-    "Shared with Trip Calculator",
+    "Shared with TripKharcha",
   ].join("\n");
   const filename = trip.name.replace(/[^a-z0-9]/gi, "_");
   const exportFiles = async (images: boolean) => {

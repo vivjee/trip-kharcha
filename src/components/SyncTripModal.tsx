@@ -126,8 +126,8 @@ export default function SyncTripModal({
             onChange={(e) => void restore(e.target.files?.[0])}
           />
           <p className="tc-help">
-            Compatible with v2 and v3 Trip Calculator backups. Maximum file
-            size: 25 MB.
+            Opens TripKharcha backups and older Trip Calculator backups (v2 and
+            v3). Maximum file size: 25 MB.
           </p>
           {trip && (
             <button

@@ -48,13 +48,13 @@ export async function importTripBackup(file: File): Promise<Trip> {
   if (file.size > 25 * 1024 * 1024) throw new Error('Backup must be smaller than 25 MB.');
   const parsed = JSON.parse(await file.text()) as Partial<TripBackup>;
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('This is not a valid Trip Calculator backup.');
+    throw new Error('This is not a valid TripKharcha backup.');
   }
   const isValidFormat =
     (parsed.format === 'trip-calculator-v3' && parsed.version === 3) ||
     (parsed.format === 'trip-calculator-v2' && parsed.version === 2);
   if (!isValidFormat || !parsed.trip) {
-    throw new Error('This is not a valid Trip Calculator backup.');
+    throw new Error('This is not a valid TripKharcha backup.');
   }
   const trip = validateTrip(parsed.trip);
   if (!parsed.photos || typeof parsed.photos !== 'object' || Array.isArray(parsed.photos) || Object.keys(parsed.photos).length > 1000) throw new Error('Invalid backup photos.');

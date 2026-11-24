@@ -51,7 +51,7 @@ const fontVariables = [
 
 export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
-  title: "Trip Calculator | Nepal Group Expenses & Trip Planning",
+  title: "TripKharcha | Nepal Group Expenses & Trip Planning",
   description: "Private, offline-first group trip expense tracking, pre-trip essentials planning, and simplified settlements in NPR.",
 };
 

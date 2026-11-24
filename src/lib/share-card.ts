@@ -94,7 +94,7 @@ export async function createShareCards(
     c.fillStyle = "#b9dbcf";
     c.font = "700 20px Arial";
     c.fillText(
-      "TRIP CALCULATOR · " + (page + 1) + " / " + pages.length,
+      "TRIPKHARCHA · " + (page + 1) + " / " + pages.length,
       64,
       66,
     );

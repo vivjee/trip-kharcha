@@ -1,4 +1,4 @@
-package com.tripcalculator.app;
+package com.tripkharcha.app;
 
 import com.getcapacitor.BridgeActivity;
 

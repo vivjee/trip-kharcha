@@ -24,7 +24,7 @@ export default function ZeroStateIntro({ userProfile, onOpenCreateProfile, onOpe
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white"><Map className="h-5 w-5" /></div>
           <div>
-            <h1 className="text-sm font-black text-white">Trip Calculator</h1>
+            <h1 className="text-sm font-black text-white">TripKharcha</h1>
             <p className="text-xs font-semibold text-slate-300">Offline group expenses · v2</p>
           </div>
         </div>

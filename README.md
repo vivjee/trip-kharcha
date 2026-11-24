@@ -1,4 +1,4 @@
-# Trip Calculator 3.1
+# TripKharcha 3.1
 
 An offline-first travel companion for Nepal trips, treks, and everyday group spending. It tracks packing, flexible expense splits, simplified payments, and local activity history. Payment simplification is a practical greedy algorithm; it does not guarantee the mathematical minimum number of transfers.
 

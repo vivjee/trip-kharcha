@@ -69,7 +69,7 @@ export default function Navigation({
         <div className="tc-sidebar-brand">
           <MapPin size={26} />
           <div>
-            <strong>Trip Calculator</strong>
+            <strong>TripKharcha</strong>
             <p>Plan. Pack. Share.</p>
           </div>
         </div>

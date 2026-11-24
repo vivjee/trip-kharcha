@@ -1,6 +1,6 @@
 {
-  "appId": "com.tripcalculator.app",
-  "appName": "Trip Calculator",
+  "appId": "com.tripkharcha.app",
+  "appName": "TripKharcha",
   "webDir": "out",
   "bundledWebRuntime": false
 }
